@@ -1,0 +1,9 @@
+# Virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Dados baixados e artefatos de modelo (regeneráveis via train.py)
+data/raw/
+data/processed/
+models/
