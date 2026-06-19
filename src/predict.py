@@ -18,13 +18,14 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+from datetime import date, datetime
 from pathlib import Path
 
 import joblib
 import numpy as np
 from tabulate import tabulate
 
-from feature_engineering import HOME_ADVANTAGE, load_team_state
+from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state
 from models import CLASSES, combine
 from squad_data import load_squad_table, squad_diffs
 
@@ -40,11 +41,19 @@ def load_models() -> dict:
             f"Modelos não encontrados: {missing}\n"
             f"Rode primeiro: python src/train.py"
         )
-    return {
+    models = {
         "Elo": joblib.load(MODELS_DIR / "elo_model.joblib"),
         "Poisson": joblib.load(MODELS_DIR / "poisson_model.joblib"),
         "ML": joblib.load(MODELS_DIR / "ml_model.joblib"),
     }
+    # Boostings (opcionais): só entram se foram treinados/persistidos.
+    for name, fname in (("CatBoost", "catboost_model.joblib"),
+                        ("LightGBM", "lightgbm_model.joblib"),
+                        ("XGBoost", "xgboost_model.joblib")):
+        p = MODELS_DIR / fname
+        if p.exists():
+            models[name] = joblib.load(p)
+    return models
 
 
 def load_weights() -> dict | None:
@@ -70,10 +79,23 @@ def resolve_team(name: str, state: dict) -> str:
     raise SystemExit(f"Seleção '{name}' não encontrada na base. Verifique o nome em inglês.")
 
 
+def _days_since(iso: str | None, ref: date, cap: int | None = None) -> float:
+    """Dias entre uma data ISO e a data de referência (NaN se ausente)."""
+    if not iso:
+        return np.nan
+    d = datetime.fromisoformat(iso).date()
+    n = (ref - d).days
+    if n < 0:
+        n = 0
+    return float(min(n, cap)) if cap is not None else float(n)
+
+
 def build_matchup_features(home: str, away: str, state: dict,
-                           neutral: bool, importance: float) -> dict:
+                           neutral: bool, importance: float,
+                           ref_date: date | None = None) -> dict:
     h, a = state[home], state[away]
     ha = 0.0 if neutral else HOME_ADVANTAGE
+    ref = ref_date or date.today()
     feats = {
         "elo_home": h["elo"],
         "elo_away": a["elo"],
@@ -90,6 +112,21 @@ def build_matchup_features(home: str, away: str, state: dict,
         "away_aggression": a["aggression"],
         "neutral": 1 if neutral else 0,
         "importance": importance,
+        # ---- features avançadas (v2) ----
+        "home_ewma_form": h.get("ewma_form", h["form"]),
+        "away_ewma_form": a.get("ewma_form", a["form"]),
+        "home_adj_attack": h.get("adj_attack", h["attack"]),
+        "away_adj_attack": a.get("adj_attack", a["attack"]),
+        "home_adj_defense": h.get("adj_defense", h["defense"]),
+        "away_adj_defense": a.get("adj_defense", a["defense"]),
+        "home_sos": h.get("sos", 0.0),
+        "away_sos": a.get("sos", 0.0),
+        "home_streak": h.get("streak", 0),
+        "away_streak": a.get("streak", 0),
+        "home_rest_days": _days_since(h.get("last_date"), ref, REST_CAP_DAYS),
+        "away_rest_days": _days_since(a.get("last_date"), ref, REST_CAP_DAYS),
+        "home_window_days": _days_since(h.get("window_start"), ref),
+        "away_window_days": _days_since(a.get("window_start"), ref),
     }
     # Força de elenco (Transfermarkt). NaN quando não há cobertura — o
     # MLModel lida com isso nativamente.

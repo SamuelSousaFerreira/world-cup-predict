@@ -23,7 +23,8 @@ import joblib
 import numpy as np
 from tabulate import tabulate
 
-from feature_engineering import HOME_ADVANTAGE, load_team_state
+from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state
+from squad_data import load_squad_table, squad_diffs
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
@@ -33,11 +34,18 @@ def load_models() -> dict:
     needed = ["elo_model.joblib", "poisson_model.joblib", "ml_model.joblib"]
     if any(not (MODELS_DIR / n).exists() for n in needed):
         raise SystemExit("Modelos não encontrados. Rode primeiro: python src/train.py")
-    return {
+    models = {
         "Elo": joblib.load(MODELS_DIR / "elo_model.joblib"),
         "Poisson": joblib.load(MODELS_DIR / "poisson_model.joblib"),
         "ML": joblib.load(MODELS_DIR / "ml_model.joblib"),
     }
+    for name, fname in (("CatBoost", "catboost_model.joblib"),
+                        ("LightGBM", "lightgbm_model.joblib"),
+                        ("XGBoost", "xgboost_model.joblib")):
+        p = MODELS_DIR / fname
+        if p.exists():
+            models[name] = joblib.load(p)
+    return models
 
 
 def load_weights() -> dict | None:
@@ -56,12 +64,13 @@ class MatchPredictor:
         self.models = load_models()
         self.weights = load_weights()
         self.importance = importance
+        self.squad_table = load_squad_table()
         self._cache: dict[tuple[str, str], np.ndarray] = {}
 
     def _features(self, a: str, b: str) -> dict:
         # Torneio em campo neutro: sem vantagem de mando.
         h, g = self.state[a], self.state[b]
-        return {
+        feats = {
             "elo_home": h["elo"], "elo_away": g["elo"],
             "elo_diff": h["elo"] - g["elo"],
             "home_form": h["form"], "away_form": g["form"],
@@ -70,7 +79,21 @@ class MatchPredictor:
             "home_style": h["style"], "away_style": g["style"],
             "home_aggression": h["aggression"], "away_aggression": g["aggression"],
             "neutral": 1, "importance": self.importance,
+            # ---- features avançadas (v2), disponíveis no team_state ----
+            "home_ewma_form": h.get("ewma_form", h["form"]),
+            "away_ewma_form": g.get("ewma_form", g["form"]),
+            "home_adj_attack": h.get("adj_attack", h["attack"]),
+            "away_adj_attack": g.get("adj_attack", g["attack"]),
+            "home_adj_defense": h.get("adj_defense", h["defense"]),
+            "away_adj_defense": g.get("adj_defense", g["defense"]),
+            "home_sos": h.get("sos", 0.0), "away_sos": g.get("sos", 0.0),
+            "home_streak": h.get("streak", 0), "away_streak": g.get("streak", 0),
+            # descanso/janela indisponíveis em simulação hipotética -> NaN.
+            "home_rest_days": np.nan, "away_rest_days": np.nan,
+            "home_window_days": np.nan, "away_window_days": np.nan,
         }
+        feats.update(squad_diffs(a, b, self.squad_table))
+        return feats
 
     def probs(self, a: str, b: str) -> np.ndarray:
         key = (a, b)

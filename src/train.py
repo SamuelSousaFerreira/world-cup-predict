@@ -19,8 +19,9 @@ from sklearn.metrics import accuracy_score, log_loss
 
 from data_collection import load_results
 from feature_engineering import build_features, load_team_state, save
-from models import (CLASSES, EloProbModel, MLModel, PoissonModel,
-                    combine, temporal_weights)
+from models import (CLASSES, CatBoostModel, EloProbModel, LightGBMModel,
+                    MLModel, PoissonModel, XGBoostModel, combine,
+                    temporal_weights)
 from squad_data import add_squad_features
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -86,6 +87,9 @@ def evaluate(df: pd.DataFrame, test_fraction: float = 0.15, val_fraction: float 
         "Elo": EloProbModel().fit(train_df, sample_weight=w_train),
         "Poisson": PoissonModel().fit(train_df, sample_weight=w_train),
         "ML": MLModel().fit(train_df, sample_weight=w_train),
+        "CatBoost": CatBoostModel().fit(train_df, sample_weight=w_train),
+        "LightGBM": LightGBMModel().fit(train_df, sample_weight=w_train),
+        "XGBoost": XGBoostModel().fit(train_df, sample_weight=w_train),
     }
 
     # Otimiza os pesos do ensemble na validação.
@@ -137,9 +141,15 @@ def train_and_save(df: pd.DataFrame, weights: dict[str, float]) -> None:
     elo = EloProbModel().fit(df, sample_weight=w)
     poisson_m = PoissonModel().fit(df, sample_weight=w)
     ml = MLModel().fit(df, sample_weight=w)
+    cat = CatBoostModel().fit(df, sample_weight=w)
+    lgb = LightGBMModel().fit(df, sample_weight=w)
+    xgb = XGBoostModel().fit(df, sample_weight=w)
     joblib.dump(elo, MODELS_DIR / "elo_model.joblib")
     joblib.dump(poisson_m, MODELS_DIR / "poisson_model.joblib")
     joblib.dump(ml, MODELS_DIR / "ml_model.joblib")
+    joblib.dump(cat, MODELS_DIR / "catboost_model.joblib")
+    joblib.dump(lgb, MODELS_DIR / "lightgbm_model.joblib")
+    joblib.dump(xgb, MODELS_DIR / "xgboost_model.joblib")
     with open(MODELS_DIR / "ensemble_weights.json", "w", encoding="utf-8") as f:
         json.dump(weights, f, indent=2)
     print(f"[ok] modelos e pesos do ensemble salvos em {MODELS_DIR}")

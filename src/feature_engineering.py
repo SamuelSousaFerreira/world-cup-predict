@@ -80,6 +80,49 @@ def goal_diff_multiplier(goal_diff: int) -> float:
     return (11 + g) / 8.0
 
 
+# ------------------------ Parâmetros das novas features --------------------- #
+EWMA_HALFLIFE_GAMES = 3.0   # meia-vida (em jogos) p/ recência dentro da janela
+SOS_SCALE = 100.0           # normalização da força de calendário (Elo -> ~[-3,3])
+STRENGTH_LO, STRENGTH_HI = 0.5, 1.7   # limites do fator de força do oponente
+REST_CAP_DAYS = 180         # teto p/ dias de descanso (evita outliers de retorno)
+
+
+def _ewma(values, halflife: float = EWMA_HALFLIFE_GAMES) -> float:
+    """Média exponencial: o jogo mais recente (fim da lista) pesa mais."""
+    n = len(values)
+    if n == 0:
+        return float("nan")
+    arr = np.asarray(values, dtype=float)
+    ages = np.arange(n - 1, -1, -1)          # mais antigo = maior idade
+    w = 0.5 ** (ages / halflife)
+    return float(np.sum(arr * w) / np.sum(w))
+
+
+def _strength_factor(opp_elo) -> np.ndarray:
+    """Fator de força do oponente (1.0 = mediano). Marcar contra time forte
+    vale mais; sofrer contra time forte 'pesa' menos."""
+    arr = np.asarray(opp_elo, dtype=float)
+    return np.clip(1.0 + (arr - ELO_START) / 600.0, STRENGTH_LO, STRENGTH_HI)
+
+
+def _streak(points) -> int:
+    """Sequência atual com sinal: +n vitórias seguidas, -n derrotas, 0 se empate."""
+    if not points:
+        return 0
+    last = points[-1]
+    if last == 1:
+        return 0
+    sign = 1 if last == 3 else -1
+    run = 0
+    for p in reversed(points):
+        if (sign == 1 and p == 3) or (sign == -1 and p == 0):
+            run += 1
+        else:
+            break
+    return sign * run
+
+
+
 @dataclass
 class TeamState:
     """Estado incremental de uma seleção."""
@@ -87,6 +130,10 @@ class TeamState:
     goals_for: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
     goals_against: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
     points: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
+    opp_elo: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
+    exp_score: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
+    dates: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
+    last_date: object = None
     games: int = 0
 
     def features(self) -> dict[str, float]:
@@ -99,23 +146,46 @@ class TeamState:
                 "defense": 1.2,
                 "style": 2.4,
                 "aggression": 0.0,
+                # novas
+                "ewma_form": 0.5,
+                "adj_attack": 1.2,
+                "adj_defense": 1.2,
+                "sos": 0.0,
+                "streak": 0,
                 "games": 0,
             }
         gf = np.mean(self.goals_for)
         ga = np.mean(self.goals_against)
+        factor = _strength_factor(self.opp_elo)
+        gf_arr = np.asarray(self.goals_for, dtype=float)
+        ga_arr = np.asarray(self.goals_against, dtype=float)
+        # EWMA da forma (pontos) com mais peso aos jogos recentes.
+        pts_frac = [p / 3.0 for p in self.points]
         return {
             "elo": self.elo,
-            "form": sum(self.points) / (n * 3.0),     # 0..1
+            "form": sum(self.points) / (n * 3.0),     # 0..1 (média simples)
             "attack": float(gf),                       # gols marcados/jogo
             "defense": float(ga),                      # gols sofridos/jogo
             "style": float(gf + ga),                   # ritmo/tempo de jogo
             "aggression": float(gf - ga),              # ofensivo(+)/defensivo(-)
+            # ---- novas features ----
+            "ewma_form": _ewma(pts_frac),              # forma recente (EWMA)
+            "adj_attack": _ewma(gf_arr * factor),      # ataque ajustado p/ oponente
+            "adj_defense": _ewma(ga_arr / factor),     # defesa ajustada p/ oponente
+            "sos": float((np.mean(self.opp_elo) - ELO_START) / SOS_SCALE),  # força do calendário
+            "streak": _streak(self.points),            # sequência com sinal
             "games": n,
         }
 
-    def update(self, gf: int, ga: int) -> None:
+    def update(self, gf: int, ga: int, opp_elo: float = ELO_START,
+               exp_score: float = 0.5, date=None) -> None:
         self.goals_for.append(gf)
         self.goals_against.append(ga)
+        self.opp_elo.append(opp_elo)
+        self.exp_score.append(exp_score)
+        if date is not None:
+            self.dates.append(date)
+            self.last_date = date
         if gf > ga:
             self.points.append(3)
         elif gf == ga:
@@ -123,6 +193,7 @@ class TeamState:
         else:
             self.points.append(0)
         self.games += 1
+
 
 
 def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tuple[pd.DataFrame, dict]:
@@ -159,6 +230,11 @@ def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tup
                 result = "D"
             else:
                 result = "A"
+            # Descanso e amplitude da janela (contexto/fadiga), com a data atual.
+            h_rest = min((r.date - sh.last_date).days, REST_CAP_DAYS) if sh.last_date is not None else np.nan
+            a_rest = min((r.date - sa.last_date).days, REST_CAP_DAYS) if sa.last_date is not None else np.nan
+            h_win = (r.date - sh.dates[0]).days if len(sh.dates) > 0 else np.nan
+            a_win = (r.date - sa.dates[0]).days if len(sa.dates) > 0 else np.nan
             rows.append({
                 "date": r.date,
                 "home_team": home,
@@ -179,6 +255,21 @@ def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tup
                 "away_style": fa["style"],
                 "home_aggression": fh["aggression"],
                 "away_aggression": fa["aggression"],
+                # ---- novas features ----
+                "home_ewma_form": fh["ewma_form"],
+                "away_ewma_form": fa["ewma_form"],
+                "home_adj_attack": fh["adj_attack"],
+                "away_adj_attack": fa["adj_attack"],
+                "home_adj_defense": fh["adj_defense"],
+                "away_adj_defense": fa["adj_defense"],
+                "home_sos": fh["sos"],
+                "away_sos": fa["sos"],
+                "home_streak": fh["streak"],
+                "away_streak": fa["streak"],
+                "home_rest_days": h_rest,
+                "away_rest_days": a_rest,
+                "home_window_days": h_win,
+                "away_window_days": a_win,
                 "home_games": fh["games"],
                 "away_games": fa["games"],
                 "home_score": r.home_score,
@@ -194,14 +285,17 @@ def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tup
         sh.elo += delta
         sa.elo -= delta
 
-        sh.update(r.home_score, r.away_score)
-        sa.update(r.away_score, r.home_score)
+        sh.update(r.home_score, r.away_score, opp_elo=fa["elo"], exp_score=exp_home, date=r.date)
+        sa.update(r.away_score, r.home_score, opp_elo=fh["elo"], exp_score=1.0 - exp_home, date=r.date)
+
 
     training_df = pd.DataFrame(rows)
     # Estado atual exportável.
     team_state = {team: st.features() | {
         "last_goals_for": list(st.goals_for),
         "last_goals_against": list(st.goals_against),
+        "last_date": st.last_date.isoformat() if st.last_date is not None else None,
+        "window_start": st.dates[0].isoformat() if len(st.dates) > 0 else None,
     } for team, st in states.items()}
     return training_df, team_state
 

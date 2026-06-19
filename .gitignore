@@ -8,3 +8,6 @@ data/raw/
 data/processed/
 data/squad/
 models/
+
+# Logs do CatBoost
+catboost_info/

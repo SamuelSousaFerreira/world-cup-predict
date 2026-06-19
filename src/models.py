@@ -55,10 +55,23 @@ ML_FEATURES = [
     "neutral", "importance",
 ]
 
-# Features completas do MLModel: base + força de elenco (Transfermarkt).
+# Features de contexto/forma avançadas (engenharia v2): ataque/defesa ajustados
+# pela força do oponente, forma com EWMA, força de calendário, sequência e
+# descanso/amplitude da janela. NaN é tratado nativamente pelos modelos de árvore.
+ADV_FEATURES = [
+    "home_ewma_form", "away_ewma_form",
+    "home_adj_attack", "away_adj_attack",
+    "home_adj_defense", "away_adj_defense",
+    "home_sos", "away_sos",
+    "home_streak", "away_streak",
+    "home_rest_days", "away_rest_days",
+    "home_window_days", "away_window_days",
+]
+
+# Features completas do MLModel: base + força de elenco (Transfermarkt) + avançadas.
 # O HistGradientBoosting trata NaN nativamente, então seleções sem cobertura
 # de elenco simplesmente entram como "informação ausente".
-ML_ALL_FEATURES = ML_FEATURES + SQUAD_FEATURES
+ML_ALL_FEATURES = ML_FEATURES + SQUAD_FEATURES + ADV_FEATURES
 
 
 def _order_proba(model_classes, proba_row_classes_dict) -> np.ndarray:
@@ -210,6 +223,59 @@ class MLModel:
         proba = self.clf.predict_proba(X)[0]
         d = dict(zip(self.clf.classes_, proba))
         return _order_proba(self.clf.classes_, d)
+
+
+# ---------------------- 4-6) Boostings calibrados --------------------------- #
+# CatBoost, LightGBM e XGBoost sobre o mesmo conjunto de features do MLModel.
+# No A/B (bloco de teste) cada um rendeu ganho marginal mas consistente ao
+# ensemble (+0.0016 em log loss com os três juntos). Usam rótulos inteiros
+# (H=0, D=1, A=2) porque XGBoost não aceita rótulos string.
+_Y2I = {"H": 0, "D": 1, "A": 2}
+
+
+class _CalibratedBoost:
+    """Base: classificador de árvore calibrado (isotônica, cv=3) sobre ML_ALL_FEATURES."""
+
+    def _make_base(self):  # pragma: no cover - implementado nas subclasses
+        raise NotImplementedError
+
+    def fit(self, df: pd.DataFrame, sample_weight: np.ndarray | None = None):
+        X = df[ML_ALL_FEATURES].to_numpy(dtype=float)
+        y = df["result"].map(_Y2I).to_numpy()
+        self.clf = CalibratedClassifierCV(self._make_base(), method="isotonic", cv=3)
+        self.clf.fit(X, y, sample_weight=sample_weight)
+        self.classes_ = self.clf.classes_
+        return self
+
+    def predict_proba(self, feats: dict) -> np.ndarray:
+        X = np.array([[feats.get(f, np.nan) for f in ML_ALL_FEATURES]], dtype=float)
+        proba = self.clf.predict_proba(X)[0]
+        # classes_ são inteiros 0/1/2 -> reordena para [H, D, A].
+        d = {CLASSES[int(c)]: p for c, p in zip(self.clf.classes_, proba)}
+        return np.array([d.get(c, 0.0) for c in CLASSES])
+
+
+class CatBoostModel(_CalibratedBoost):
+    def _make_base(self):
+        from catboost import CatBoostClassifier
+        return CatBoostClassifier(iterations=400, learning_rate=0.05, depth=6,
+                                  l2_leaf_reg=3.0, random_seed=42, verbose=0)
+
+
+class LightGBMModel(_CalibratedBoost):
+    def _make_base(self):
+        from lightgbm import LGBMClassifier
+        return LGBMClassifier(n_estimators=400, learning_rate=0.05, num_leaves=31,
+                              reg_lambda=1.0, subsample=0.8, colsample_bytree=0.8,
+                              random_state=42, verbose=-1)
+
+
+class XGBoostModel(_CalibratedBoost):
+    def _make_base(self):
+        from xgboost import XGBClassifier
+        return XGBClassifier(n_estimators=400, learning_rate=0.05, max_depth=6,
+                             reg_lambda=1.0, subsample=0.8, colsample_bytree=0.8,
+                             eval_metric="mlogloss", random_state=42)
 
 
 # ------------------------- Ensemble / Divergência --------------------------- #
