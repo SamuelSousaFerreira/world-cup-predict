@@ -200,6 +200,13 @@ if weights:
     wtxt = " · ".join(f"{k} {v:.2f}" for k, v in weights.items() if v > 0.01)
     st.sidebar.caption(f"Pesos: {wtxt}")
 
+st.sidebar.divider()
+st.sidebar.markdown(
+    "[![GitHub](https://img.shields.io/badge/GitHub-Repositório-181717?logo=github&logoColor=white)]"
+    "(https://github.com/SamuelSousaFerreira/world-cup-predict)"
+)
+st.sidebar.caption("by **Samuel Sousa Ferreira**")
+
 st.title("⚽ Previsor da Copa do Mundo")
 st.caption(
     "Probabilidades de resultado e de gols a partir de um ensemble de seis "
