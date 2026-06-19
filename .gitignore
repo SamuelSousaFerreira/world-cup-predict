@@ -9,6 +9,7 @@ data/raw/
 
 # Dataset de treino completo — grande e regenerável via train.py
 data/processed/training_data.csv
+data/processed/training_data.parquet
 
 # Logs e artefatos temporários do CatBoost
 catboost_info/
