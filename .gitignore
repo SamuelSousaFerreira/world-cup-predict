@@ -6,4 +6,5 @@ __pycache__/
 # Dados baixados e artefatos de modelo (regeneráveis via train.py)
 data/raw/
 data/processed/
+data/squad/
 models/

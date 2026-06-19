@@ -30,6 +30,8 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
+from squad_data import SQUAD_FEATURES
+
 CLASSES = ["H", "D", "A"]  # ordem canônica das probabilidades
 
 # Meia-vida do decaimento temporal: um jogo de HALF_LIFE_DAYS atrás pesa
@@ -52,6 +54,11 @@ ML_FEATURES = [
     "home_aggression", "away_aggression",
     "neutral", "importance",
 ]
+
+# Features completas do MLModel: base + força de elenco (Transfermarkt).
+# O HistGradientBoosting trata NaN nativamente, então seleções sem cobertura
+# de elenco simplesmente entram como "informação ausente".
+ML_ALL_FEATURES = ML_FEATURES + SQUAD_FEATURES
 
 
 def _order_proba(model_classes, proba_row_classes_dict) -> np.ndarray:
@@ -192,14 +199,14 @@ class MLModel:
         self.clf = CalibratedClassifierCV(base, method="isotonic", cv=3)
 
     def fit(self, df: pd.DataFrame, sample_weight: np.ndarray | None = None) -> "MLModel":
-        X = df[ML_FEATURES].to_numpy(dtype=float)
+        X = df[ML_ALL_FEATURES].to_numpy(dtype=float)
         y = df["result"].to_numpy()
         self.clf.fit(X, y, sample_weight=sample_weight)
         self.classes_ = self.clf.classes_
         return self
 
     def predict_proba(self, feats: dict) -> np.ndarray:
-        X = np.array([[feats[f] for f in ML_FEATURES]], dtype=float)
+        X = np.array([[feats.get(f, np.nan) for f in ML_ALL_FEATURES]], dtype=float)
         proba = self.clf.predict_proba(X)[0]
         d = dict(zip(self.clf.classes_, proba))
         return _order_proba(self.clf.classes_, d)

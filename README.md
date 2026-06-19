@@ -19,6 +19,7 @@ pré-jogo), as features pedidas:
 | **Estilo de jogo** | *Ritmo* (gols totais/jogo) e *agressividade* (saldo: ofensivo vs defensivo) |
 | **Elo** | Rating dinâmico com vantagem de mando e peso por importância do torneio |
 | **Mando / Importância** | Campo neutro e peso do torneio (Copa do Mundo > eliminatória > amistoso) |
+| **Força de elenco** | Valor de mercado, idade média e ranking FIFA do elenco ([Transfermarkt](https://github.com/dcaribou/transfermarkt-datasets), CC0) |
 
 ## Três modelos (com prós e contras)
 
@@ -29,11 +30,11 @@ favorito, o sistema emite um alerta de **DIVERGÊNCIA** — cabe ao humano decid
 |---|---|---|---|
 | **Elo** | Regressão logística sobre rating | Robusto, interpretável, ótimo p/ força relativa | Ignora forma e estilo; não dá placar |
 | **Poisson** | Força ataque × defesa → gols esperados | Modela ataque/defesa; gera placar provável | Assume independência; sensível a goleadas |
-| **ML** | Gradient Boosting calibrado (todas as features) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
+| **ML** | Gradient Boosting calibrado (todas as features + força de elenco) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
 
 O **Ensemble** combina as três probabilidades com **pesos otimizados** (em vez de
 média simples): os pesos que minimizam o log loss numa janela de validação são
-aprendidos automaticamente e salvos. Atualmente: Elo ~0.48, ML ~0.29, Poisson ~0.23.
+aprendidos automaticamente e salvos. Atualmente: ML ~0.56, Poisson ~0.23, Elo ~0.20.
 
 ### Melhorias aplicadas
 
@@ -45,16 +46,22 @@ aprendidos automaticamente e salvos. Atualmente: Elo ~0.48, ML ~0.29, Poisson ~0
   temporal separada (não usa o teste), evitando vazamento.
 - **Simulação de Monte Carlo de torneio** — estima a probabilidade de cada
   seleção ser campeã simulando milhares de chaveamentos (ver abaixo).
+- **Força de elenco (Transfermarkt)** — valor de mercado, idade média e ranking
+  FIFA do elenco entram como features do ML. É um *snapshot atual* aplicado a
+  todos os jogos; o decaimento temporal faz só os recentes pesarem, onde o
+  snapshot é uma boa aproximação. Seleções sem cobertura recebem `NaN`, tratado
+  nativamente pelo HistGradientBoosting. Ganho medido no teste: log loss
+  0.876 → 0.869, acurácia +0.5pp.
 
 ### Desempenho (backtest temporal, ~4.800 jogos recentes)
 
 | Modelo | Acurácia | Log Loss | Brier |
 |---|---|---|---|
 | Elo | 0.604 | 0.874 | 0.514 |
-| Poisson | 0.594 | 0.948 | 0.542 |
-| ML | 0.603 | 0.879 | 0.516 |
-| Ensemble (média) | 0.602 | 0.875 | 0.515 |
-| **Ensemble (pesos)** | **0.604** | **0.873** | **0.514** |
+| Poisson | 0.595 | 0.948 | 0.541 |
+| ML | 0.608 | 0.872 | 0.512 |
+| Ensemble (média) | 0.605 | 0.872 | 0.513 |
+| **Ensemble (pesos)** | **0.605** | **0.869** | **0.511** |
 | Baseline (classe majoritária) | 0.477 | — | — |
 
 Validação **temporal em três blocos** (treino → validação → teste): treina no
@@ -144,13 +151,15 @@ world-cup/
 ├── src/
 │   ├── data_collection.py      # download + cache da base pública
 │   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo
+│   ├── squad_data.py           # força de elenco (valor/idade/ranking) via Transfermarkt
 │   ├── models.py               # Elo / Poisson(Dixon-Coles) / ML + ensemble ponderado
 │   ├── train.py                # treino, decaimento temporal, backtest, pesos
 │   ├── predict.py              # CLI de previsão de confronto
 │   └── simulate_tournament.py  # simulação Monte Carlo do mata-mata
 ├── data/
 │   ├── raw/                    # CSVs baixados
-│   └── processed/              # features + estado atual das seleções
+│   ├── processed/              # features + estado atual das seleções
+│   └── squad/                  # tabela de elenco (Transfermarkt, cacheada)
 └── models/                     # modelos treinados (.joblib) + pesos do ensemble
 ```
 

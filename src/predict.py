@@ -26,6 +26,7 @@ from tabulate import tabulate
 
 from feature_engineering import HOME_ADVANTAGE, load_team_state
 from models import CLASSES, combine
+from squad_data import load_squad_table, squad_diffs
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
@@ -73,7 +74,7 @@ def build_matchup_features(home: str, away: str, state: dict,
                            neutral: bool, importance: float) -> dict:
     h, a = state[home], state[away]
     ha = 0.0 if neutral else HOME_ADVANTAGE
-    return {
+    feats = {
         "elo_home": h["elo"],
         "elo_away": a["elo"],
         "elo_diff": h["elo"] + ha - a["elo"],
@@ -90,6 +91,10 @@ def build_matchup_features(home: str, away: str, state: dict,
         "neutral": 1 if neutral else 0,
         "importance": importance,
     }
+    # Força de elenco (Transfermarkt). NaN quando não há cobertura — o
+    # MLModel lida com isso nativamente.
+    feats.update(squad_diffs(home, away, load_squad_table()))
+    return feats
 
 
 def fmt_pct(p: np.ndarray) -> list[str]:

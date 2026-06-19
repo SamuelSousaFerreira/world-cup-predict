@@ -21,6 +21,7 @@ from data_collection import load_results
 from feature_engineering import build_features, load_team_state, save
 from models import (CLASSES, EloProbModel, MLModel, PoissonModel,
                     combine, temporal_weights)
+from squad_data import add_squad_features
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = PROJECT_ROOT / "models"
@@ -151,6 +152,8 @@ def main() -> None:
 
     print("\n=== 2/3 Engenharia de features ===")
     training_df, team_state = build_features(matches)
+    # Força de elenco (Transfermarkt): diferenças de valor/idade/ranking FIFA.
+    training_df = add_squad_features(training_df)
     save(training_df, team_state)
 
     print("\n=== 3/3 Avaliação + treino ===")
