@@ -254,14 +254,18 @@ with tab_jogo:
         )
 
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric(f"{h} vence", f"{ens[0]*100:.1f}%")
-        m2.metric("Empate", f"{ens[1]*100:.1f}%")
-        m3.metric(f"{a} vence", f"{ens[2]*100:.1f}%")
+        m1.metric(f"{h} vence", f"{ens[0]*100:.1f}%",
+                  help="Probabilidade de vitória do mandante segundo o ensemble (média ponderada dos 6 modelos).")
+        m2.metric("Empate", f"{ens[1]*100:.1f}%",
+                  help="Probabilidade de empate no tempo normal segundo o ensemble.")
+        m3.metric(f"{a} vence", f"{ens[2]*100:.1f}%",
+                  help="Probabilidade de vitória do visitante segundo o ensemble (média ponderada dos 6 modelos).")
         m4.metric("Placar provável", f"{gi}–{gj}", f"{gp*100:.1f}% • xG {eg_h:.2f}–{eg_a:.2f}",
-                  delta_color="off")
+                  delta_color="off",
+                  help="Placar de maior probabilidade individual (modelo Poisson). xG = gols esperados de cada time (λ Poisson). A % é a probabilidade daquele placar exato.")
 
         st.divider()
-        st.markdown("#### Perfil das seleções")
+        st.subheader("Perfil das seleções", help="Resumo das estatísticas recentes de cada seleção: rating Elo, forma, força de ataque/defesa ajustados, valor de elenco e estilo de jogo.")
         f1, f2 = st.columns(2)
         _all_elos = [v["elo"] for v in state.values()]
         _elo_min, _elo_max = min(_all_elos), max(_all_elos)
@@ -342,7 +346,7 @@ with tab_jogo:
                 )
 
         st.divider()
-        st.markdown("#### Últimos 5 jogos")
+        st.subheader("Últimos 5 jogos", help="Os 5 jogos mais recentes de cada seleção na base de dados, do mais novo para o mais antigo. V = vitória, E = empate, D = derrota.")
         r1, r2 = st.columns(2)
         for col, team, matches in ((r1, h, res["recent_home"]), (r2, a, res["recent_away"])):
             with col:
@@ -377,7 +381,7 @@ with tab_jogo:
                 f"(dispersão {res['disagreement']*100:.1f} pp). Decisão humana recomendada."
             )
 
-        st.markdown("#### Resultado (1X2)")
+        st.subheader("Resultado (1X2)", help="Notação clássica de apostas: 1 = vitória do mandante, X = empate, 2 = vitória do visitante. Mostra as probabilidades de cada desfecho no tempo normal, por modelo e pelo ensemble.")
         left, right = st.columns([3, 2])
         with left:
             st.markdown("**Probabilidades por modelo**")
@@ -397,7 +401,7 @@ with tab_jogo:
             st.altair_chart(outcome_bar(ens, h, a, hc, ac), width="stretch")
 
         st.divider()
-        st.markdown("#### Probabilidades de gols")
+        st.subheader("Probabilidades de gols", help="Derivadas do modelo Poisson com correção Dixon-Coles. Mostra a distribuição de gols de cada time, o mapa de calor dos placares exatos e os mercados clássicos (over/under e ambas marcam).")
         g_left, g_right = st.columns([3, 2])
         with g_left:
             st.markdown("**Mapa de calor dos placares** (gols mandante × visitante)")
