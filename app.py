@@ -341,6 +341,36 @@ with tab_jogo:
                     unsafe_allow_html=True,
                 )
 
+        st.divider()
+        st.markdown("#### Últimos 5 jogos")
+        r1, r2 = st.columns(2)
+        for col, team, matches in ((r1, h, res["recent_home"]), (r2, a, res["recent_away"])):
+            with col:
+                st.markdown(f"{flag_img_tag(team, 20)}**{team}**", unsafe_allow_html=True)
+                _COLOR = {"W": ("#16a34a", "#dcfce7"), "D": ("#d97706", "#fef9c3"), "L": ("#dc2626", "#fee2e2")}
+                _LABEL = {"W": "V", "D": "E", "L": "D"}
+                for m in matches:
+                    rc, bg = _COLOR[m["result"]]
+                    lbl = _LABEL[m["result"]]
+                    opp_flag = flag_img_tag(m["opponent"], 18)
+                    tourn = m["tournament"].replace("FIFA World Cup qualification", "Eliminatória WC") \
+                                          .replace("FIFA World Cup", "Copa do Mundo") \
+                                          .replace("Friendly", "Amistoso")
+                    st.markdown(
+                        f"<div style='display:flex;align-items:center;gap:10px;"
+                        f"padding:6px 10px;margin-bottom:5px;border-radius:8px;"
+                        f"background:{bg};border-left:4px solid {rc}'>"
+                        f"<span style='background:{rc};color:#fff;font-weight:700;"
+                        f"border-radius:5px;padding:2px 8px;font-size:.85rem'>{lbl}</span>"
+                        f"<span style='font-size:.95rem;font-weight:600'>"
+                        f"{m['gf']}–{m['ga']}</span>"
+                        f"<span style='flex:1'>{opp_flag}{m['opponent']}</span>"
+                        f"<span style='font-size:.75rem;color:#64748b;text-align:right'>"
+                        f"{m['date']}<br><i>{tourn}</i></span>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
+
         if res["diverges"]:
             st.warning(
                 f"⚠️ Modelos divergem no favorito "
@@ -404,36 +434,6 @@ with tab_jogo:
                     cmap="Blues", subset=["Prob."]),
                 width="stretch",
             )
-
-        st.divider()
-        st.markdown("#### Últimos 5 jogos")
-        r1, r2 = st.columns(2)
-        for col, team, matches in ((r1, h, res["recent_home"]), (r2, a, res["recent_away"])):
-            with col:
-                st.markdown(f"{flag_img_tag(team, 20)}**{team}**", unsafe_allow_html=True)
-                _COLOR = {"W": ("#16a34a", "#dcfce7"), "D": ("#d97706", "#fef9c3"), "L": ("#dc2626", "#fee2e2")}
-                _LABEL = {"W": "V", "D": "E", "L": "D"}
-                for m in matches:
-                    rc, bg = _COLOR[m["result"]]
-                    lbl = _LABEL[m["result"]]
-                    opp_flag = flag_img_tag(m["opponent"], 18)
-                    tourn = m["tournament"].replace("FIFA World Cup qualification", "Eliminatória WC") \
-                                          .replace("FIFA World Cup", "Copa do Mundo") \
-                                          .replace("Friendly", "Amistoso")
-                    st.markdown(
-                        f"<div style='display:flex;align-items:center;gap:10px;"
-                        f"padding:6px 10px;margin-bottom:5px;border-radius:8px;"
-                        f"background:{bg};border-left:4px solid {rc}'>"
-                        f"<span style='background:{rc};color:#fff;font-weight:700;"
-                        f"border-radius:5px;padding:2px 8px;font-size:.85rem'>{lbl}</span>"
-                        f"<span style='font-size:.95rem;font-weight:600'>"
-                        f"{m['gf']}–{m['ga']}</span>"
-                        f"<span style='flex:1'>{opp_flag}{m['opponent']}</span>"
-                        f"<span style='font-size:.75rem;color:#64748b;text-align:right'>"
-                        f"{m['date']}<br><i>{tourn}</i></span>"
-                        f"</div>",
-                        unsafe_allow_html=True,
-                    )
 
         st.divider()
         with st.expander("📊 Comparar com o mercado (odds das casas de aposta)"):
