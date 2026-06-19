@@ -20,9 +20,8 @@ pré-jogo), as features pedidas:
 | **Elo** | Rating dinâmico com vantagem de mando e peso por importância do torneio |
 | **Mando / Importância** | Campo neutro e peso do torneio (Copa do Mundo > eliminatória > amistoso) |
 | **Força de elenco** | Valor de mercado, idade média e ranking FIFA do elenco ([Transfermarkt](https://github.com/dcaribou/transfermarkt-datasets), CC0) |
-| **Forma/contexto avançados** | EWMA da forma, ataque/defesa ajustados pela força do oponente, força de calendário (SoS), sequência, descanso e amplitude da janela |
 
-## Seis modelos (com prós e contras)
+## Três modelos (com prós e contras)
 
 Cada modelo gera probabilidades de forma **independente**. Quando discordam do
 favorito, o sistema emite um alerta de **DIVERGÊNCIA** — cabe ao humano decidir.
@@ -30,19 +29,12 @@ favorito, o sistema emite um alerta de **DIVERGÊNCIA** — cabe ao humano decid
 | Modelo | Abordagem | Prós | Contras |
 |---|---|---|---|
 | **Elo** | Regressão logística sobre rating | Robusto, interpretável, ótimo p/ força relativa | Ignora forma e estilo; não dá placar |
-| **Poisson** | Força ataque × defesa → gols esperados (com Dixon-Coles) | Modela ataque/defesa; gera placar provável | Assume independência; sensível a goleadas |
-| **ML** | HistGradientBoosting calibrado (todas as features) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
-| **CatBoost** | Gradient boosting calibrado | Robusto, bom com NaN; forte no ensemble | Caixa-preta; treino mais lento |
-| **LightGBM** | Gradient boosting calibrado | Rápido; captura interações | Caixa-preta; pode superajustar |
-| **XGBoost** | Gradient boosting calibrado | Forte e regularizado | Caixa-preta; ganho marginal |
+| **Poisson** | Força ataque × defesa → gols esperados | Modela ataque/defesa; gera placar provável | Assume independência; sensível a goleadas |
+| **ML** | Gradient Boosting calibrado (todas as features + força de elenco) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
 
-Os três boostings (CatBoost, LightGBM, XGBoost) treinam sobre o mesmo conjunto
-de features do ML e são todos **calibrados** (isotônica). O **Ensemble** combina
-as seis probabilidades com **pesos otimizados** (em vez de média simples): os
-pesos que minimizam o log loss numa janela de validação são aprendidos
-automaticamente e salvos. Atualmente: CatBoost ~0.42, LightGBM ~0.23, Elo ~0.18,
-Poisson ~0.17 (ML e XGBoost ficam ~0, pois suas previsões já são quase
-redundantes com os demais).
+O **Ensemble** combina as três probabilidades com **pesos otimizados** (em vez de
+média simples): os pesos que minimizam o log loss numa janela de validação são
+aprendidos automaticamente e salvos. Atualmente: ML ~0.56, Poisson ~0.23, Elo ~0.20.
 
 ### Melhorias aplicadas
 
@@ -52,18 +44,14 @@ redundantes com os demais).
   placares baixos (0-0, 1-0, 0-1, 1-1), onde o Poisson puro erra mais.
 - **Ensemble com pesos otimizados** — minimiza log loss numa janela de validação
   temporal separada (não usa o teste), evitando vazamento.
-- **Mais modelos no ensemble** — CatBoost, LightGBM e XGBoost (calibrados) se
-  somam ao Elo, Poisson e ML, reduzindo o log loss do ensemble.
 - **Simulação de Monte Carlo de torneio** — estima a probabilidade de cada
   seleção ser campeã simulando milhares de chaveamentos (ver abaixo).
 - **Força de elenco (Transfermarkt)** — valor de mercado, idade média e ranking
-  FIFA do elenco entram como features dos modelos de árvore. É um *snapshot
-  atual* aplicado a todos os jogos; o decaimento temporal faz só os recentes
-  pesarem, onde o snapshot é uma boa aproximação. Seleções sem cobertura recebem
-  `NaN`, tratado nativamente pelos modelos de árvore.
-- **Features de contexto avançadas (v2)** — forma com EWMA, ataque/defesa
-  ajustados pela força do oponente, força de calendário (SoS), sequência de
-  resultados, dias de descanso e amplitude da janela de jogos.
+  FIFA do elenco entram como features do ML. É um *snapshot atual* aplicado a
+  todos os jogos; o decaimento temporal faz só os recentes pesarem, onde o
+  snapshot é uma boa aproximação. Seleções sem cobertura recebem `NaN`, tratado
+  nativamente pelo HistGradientBoosting. Ganho medido no teste: log loss
+  0.876 → 0.869, acurácia +0.5pp.
 
 ### Desempenho (backtest temporal, ~4.800 jogos recentes)
 
@@ -71,12 +59,9 @@ redundantes com os demais).
 |---|---|---|---|
 | Elo | 0.604 | 0.874 | 0.514 |
 | Poisson | 0.595 | 0.948 | 0.541 |
-| ML | 0.611 | 0.866 | 0.509 |
-| CatBoost | 0.605 | 0.866 | 0.509 |
-| LightGBM | 0.603 | 0.873 | 0.510 |
-| XGBoost | 0.607 | 0.868 | 0.510 |
-| **Ensemble (média)** | **0.608** | **0.862** | **0.507** |
-| Ensemble (pesos) | 0.607 | 0.863 | 0.508 |
+| ML | 0.608 | 0.872 | 0.512 |
+| Ensemble (média) | 0.605 | 0.872 | 0.513 |
+| **Ensemble (pesos)** | **0.605** | **0.869** | **0.511** |
 | Baseline (classe majoritária) | 0.477 | — | — |
 
 Validação **temporal em três blocos** (treino → validação → teste): treina no
@@ -121,9 +106,6 @@ Saída de exemplo:
 |      Elo |     23.9% |  26.5% |         49.6% |
 |  Poisson |     12.0% |  22.0% |         66.0% |
 |       ML |     22.1% |  20.2% |         57.7% |
-| CatBoost |     21.4% |  21.0% |         57.6% |
-| LightGBM |     20.8% |  21.3% |         57.9% |
-|  XGBoost |     22.0% |  20.5% |         57.5% |
 | ENSEMBLE |     19.3% |  22.9% |         57.8% |
 
 Placar mais provável (Poisson): Brazil 1 x 2 Argentina
@@ -162,58 +144,6 @@ empate) e o torneio é repetido milhares de vezes (Monte Carlo).
 
 ### 4. Interface web (Streamlit)
 
-#### Métricas exibidas no dashboard
-
-##### Cabeçalho (4 cards de resumo)
-
-| Métrica | O que significa |
-|---|---|
-| **% vitória mandante / visitante** | Probabilidade do ensemble (média ponderada dos 6 modelos) de cada time vencer. |
-| **% empate** | Probabilidade de empate no tempo normal, segundo o ensemble. |
-| **Placar provável** | Placar de maior probabilidade individual segundo o modelo Poisson. O valor entre parênteses é a probabilidade daquele placar exato, e as siglas "xG" são os gols esperados de cada time (λ Poisson). |
-
-##### Cards de perfil de cada seleção
-
-| Métrica | O que significa |
-|---|---|
-| **Elo** | Rating dinâmico (escala ~1000–2100). A barra mostra a posição relativa entre todas as seleções da base. Jogos contra adversários mais fortes alteram o Elo mais do que jogos contra seleções fracas. |
-| **Forma (últimos 10 jogos)** | Pontuação acumulada nos últimos 10 jogos (3 pts vitória, 1 empate, 0 derrota) normalizada para 0–100 %. Calculada com **EWMA** — jogos mais recentes pesam proporcionalmente mais. |
-| **Ataque (aj. oponente)** | Média de gols marcados ajustada pela força defensiva dos adversários enfrentados. Um time que marcou 2 gols contra uma boa defesa terá um ajuste maior do que 2 gols contra uma defesa fraca. O valor "bruto" (sem ajuste) é exibido abaixo. |
-| **Defesa (aj. oponente)** | Média de gols sofridos ajustada pela força ofensiva dos adversários. Quanto menor, melhor. O valor "bruto" é exibido abaixo. |
-| **Valor de elenco** | Valor de mercado total do elenco em euros (fonte: Transfermarkt, CC0). Proxy de qualidade dos jogadores. Seleções sem cobertura exibem "—". |
-| **Idade média / FIFA** | Idade média do elenco e posição atual no ranking FIFA (snapshot do último treino). |
-| **Força de calendário (SoS)** | *Strength of Schedule* — Elo médio dos adversários que a seleção enfrentou nos jogos usados para calcular a forma, normalizado entre 0 e 1. **Alto** = jogou contra seleções difíceis; **baixo** = calendário mais fácil. Serve para contextualizar se a forma foi conquistada com mérito. |
-| **Estilo de jogo** | Derivado da *agressividade* (saldo entre gols marcados e sofridos em relação à média): "Muito ofensivo / Ofensivo / Equilibrado / Defensivo". |
-| **Ritmo** | Derivado do *ritmo* (total de gols por jogo): "Ritmo alto / médio / baixo". Indica se o time tende a jogos com muitos gols. |
-| **Sequência** | Número de vitórias ou derrotas consecutivas até o último jogo da base. Neutro se não há sequência definida. |
-
-##### Últimos 5 jogos
-
-Cada card mostra resultado (**V** vitória / **E** empate / **D** derrota), placar, adversário com bandeira, data e competição. Ordenados do mais recente para o mais antigo.
-
-##### Seção Resultado (1X2)
-
-| Elemento | O que significa |
-|---|---|
-| **Tabela por modelo** | Probabilidades brutas de cada um dos 6 modelos (Elo, Poisson, ML, CatBoost, LightGBM, XGBoost) + linha do Ensemble. |
-| **Gráfico de barras do ensemble** | Visualização das três probabilidades do ensemble com as cores das seleções. |
-| **Alerta de divergência** | Aparece quando os modelos discordam sobre o favorito (ex.: Elo diz time A, Poisson diz time B). A dispersão em pp indica quão longe as probabilidades individuais estão umas das outras. |
-
-##### Seção Probabilidades de gols
-
-| Elemento | O que significa |
-|---|---|
-| **Mapa de calor (heatmap)** | Probabilidade de cada placar exato (mandante × visitante, até 5×5). Quanto mais escura a célula, mais provável aquele placar. |
-| **Distribuição de gols** | Barras mostrando a probabilidade de cada time marcar 0, 1, 2, 3… gols, calculadas pela distribuição Poisson com λ = xG do modelo. |
-| **Placares mais prováveis** | Top 10 placares individuais com maior probabilidade, em ordem decrescente. |
-| **Mercados de gols** | Probabilidades acumuladas dos mercados clássicos de apostas: "Mais de 0.5 gols" (≈ jogo sem 0×0), "Mais de 1.5", "Mais de 2.5", "Mais de 3.5" e **Ambas marcam** (BTTS — ambos os times marcam pelo menos 1 gol). |
-
-##### Comparar com o mercado (expansível)
-
-Informe as odds decimais das casas de apostas. O sistema aplica **devig** (remove a margem da casa) e compara com as probabilidades do ensemble, mostrando a diferença em pontos percentuais. Uma diferença positiva indica uma potencial **vantagem de valor** (*value bet*).
-
----
-
 ```powershell
 .\venv\Scripts\streamlit.exe run app.py
 ```
@@ -233,12 +163,11 @@ world-cup/
 ├── requirements.txt
 ├── README.md
 ├── app.py                      # interface web (Streamlit): jogo + mata-mata
-├── experiment_squad.py         # experimento A/B das features de elenco
 ├── src/
 │   ├── data_collection.py      # download + cache da base pública
-│   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo + features v2
+│   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo
 │   ├── squad_data.py           # força de elenco (valor/idade/ranking) via Transfermarkt
-│   ├── models.py               # Elo / Poisson(Dixon-Coles) / ML / CatBoost / LightGBM / XGBoost + ensemble ponderado
+│   ├── models.py               # Elo / Poisson(Dixon-Coles) / ML + ensemble ponderado
 │   ├── train.py                # treino, decaimento temporal, backtest, pesos
 │   ├── predict.py              # CLI de previsão de confronto
 │   └── simulate_tournament.py  # simulação Monte Carlo do mata-mata

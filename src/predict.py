@@ -25,7 +25,7 @@ import joblib
 import numpy as np
 from tabulate import tabulate
 
-from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state, recent_matches
+from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state
 from models import CLASSES, combine
 from squad_data import load_squad_table, squad_diffs
 
@@ -167,25 +167,33 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
     score = models["Poisson"].most_likely_score(feats)
     result = combine(probs, score, weights=weights)
 
-    # Distribuição de placares (Poisson) — matriz completa + top placares.
+    # Distribuição de placares (Poisson).
     m = models["Poisson"].score_matrix(feats)
+    poisson_probs = np.array([
+        float(np.tril(m, -1).sum()),  # H (mandante i > j)
+        float(np.trace(m)),           # D (i == j)
+        float(np.triu(m, 1).sum()),   # A (visitante i < j)
+    ])
+
+    def _label(i: int, j: int) -> str:
+        return "H" if i > j else ("D" if i == j else "A")
+
+    # Top placares mais prováveis (lista geral).
     flat = np.argsort(m.ravel())[::-1][:8]
     top_scores = []
     for idx in flat:
         i, j = np.unravel_index(idx, m.shape)
-        top_scores.append((int(i), int(j), float(m[i, j])))
+        top_scores.append((int(i), int(j), float(m[i, j]), _label(int(i), int(j))))
 
-    # Distribuições marginais de gols (probabilidade de cada seleção marcar k gols).
-    home_goal_dist = m.sum(axis=1)   # P(mandante marca k)
-    away_goal_dist = m.sum(axis=0)   # P(visitante marca k)
-    exp_home, exp_away = models["Poisson"].expected_goals(feats)
-
-    # Mercados derivados da matriz de placares.
-    total_goals = np.add.outer(np.arange(m.shape[0]), np.arange(m.shape[1]))
-    over_under = {
-        thr: float(m[total_goals > thr].sum()) for thr in (0.5, 1.5, 2.5, 3.5)
-    }
-    btts = float(m[1:, 1:].sum())    # ambos marcam (both teams to score)
+    # Placar mais provável dentro de cada resultado (H/D/A): útil para mostrar um
+    # placar coerente com o favorito do ENSEMBLE, evitando a aparente contradição
+    # "favorito X, mas placar de empate".
+    best_by_result: dict[str, tuple[int, int, float]] = {}
+    for i in range(m.shape[0]):
+        for j in range(m.shape[1]):
+            lab = _label(i, j)
+            if lab not in best_by_result or m[i, j] > best_by_result[lab][2]:
+                best_by_result[lab] = (i, j, float(m[i, j]))
 
     return {
         "home": home,
@@ -193,20 +201,14 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
         "neutral": neutral,
         "probs": probs,                 # {modelo: np.array([H, D, A])}
         "ensemble": result.ensemble,    # np.array([H, D, A])
+        "poisson_probs": poisson_probs,  # np.array([H, D, A]) só do Poisson
         "most_likely_score": result.most_likely_score,
-        "top_scores": top_scores,       # [(gh, ga, prob), ...]
-        "score_matrix": m,              # [gh, ga] -> probabilidade do placar exato
-        "home_goal_dist": home_goal_dist,
-        "away_goal_dist": away_goal_dist,
-        "expected_goals": (float(exp_home), float(exp_away)),
-        "over_under": over_under,        # {limiar: P(total > limiar)}
-        "btts": btts,                    # P(ambas marcam)
+        "top_scores": top_scores,       # [(gh, ga, prob, "H"/"D"/"A"), ...]
+        "best_by_result": best_by_result,  # {"H": (gh,ga,p), "D": ..., "A": ...}
         "diverges": result.diverges,
         "disagreement": result.disagreement,
         "state_home": state[home],
         "state_away": state[away],
-        "recent_home": recent_matches(home, 5),
-        "recent_away": recent_matches(away, 5),
     }
 
 
