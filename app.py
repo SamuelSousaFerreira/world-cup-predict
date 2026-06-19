@@ -327,16 +327,138 @@ with tab_jogo:
             )
 
         st.divider()
-        st.markdown("#### Forças atuais")
+        st.markdown("#### Perfil das seleções")
         f1, f2 = st.columns(2)
-        for col, team, sdata in ((f1, h, res["state_home"]), (f2, a, res["state_away"])):
+        _all_elos = [v["elo"] for v in state.values()]
+        _elo_min, _elo_max = min(_all_elos), max(_all_elos)
+        for col, team, sdata, tc in ((f1, h, res["state_home"], hc), (f2, a, res["state_away"], ac)):
+            sq = squad_table.get(team, {})
+            streak = sdata.get("streak", 0)
+            if streak > 0:
+                streak_txt = f"🔥 {streak} vitória{'s' if streak > 1 else ''} seguida{'s' if streak > 1 else ''}"
+            elif streak < 0:
+                streak_txt = f"📉 {abs(streak)} derrota{'s' if abs(streak) > 1 else ''} seguida{'s' if abs(streak) > 1 else ''}"
+            else:
+                streak_txt = "➖ Sem sequência"
+            elo_pct = int((sdata["elo"] - _elo_min) / max(_elo_max - _elo_min, 1) * 100)
+            form_pct = int(sdata["form"] * 100)
+            style_label = (
+                "⚔️ Muito ofensivo" if sdata.get("aggression", 0) > 1.5 else
+                "⚔️ Ofensivo"      if sdata.get("aggression", 0) > 0.5 else
+                "⚖️ Equilibrado"   if sdata.get("aggression", 0) > -0.5 else
+                "🛡️ Defensivo"
+            )
+            tempo_label = (
+                "🎯 Ritmo alto"  if sdata.get("style", 0) > 3.5 else
+                "🎯 Ritmo médio" if sdata.get("style", 0) > 2.5 else
+                "🎯 Ritmo baixo"
+            )
+            value_str = f"€{sq['value']/1e6:.0f}M" if sq.get("value") else "—"
+            age_str   = f"{sq['age']:.1f} anos"    if sq.get("age")   else "—"
+            rank_str  = f"#{int(sq['fifa_rank'])}"  if sq.get("fifa_rank") else "—"
             with col:
-                st.markdown(f"{flag_img_tag(team, 22)}**{team}**", unsafe_allow_html=True)
-                st.caption(
-                    f"Elo {sdata['elo']:.0f} • forma {sdata['form']*100:.0f}% • "
-                    f"ataque {sdata['attack']:.2f} • defesa {sdata['defense']:.2f}"
+                st.markdown(
+                    f"<div style='border:1px solid {tc}55;border-radius:12px;"
+                    f"padding:16px 18px;background:linear-gradient(135deg,{tc}12 0%,#ffffff00 100%)'>"
+
+                    # Cabeçalho
+                    f"<div style='display:flex;align-items:center;gap:10px;margin-bottom:14px'>"
+                    f"{flag_img_tag(team, 32)}"
+                    f"<span style='font-size:1.15rem;font-weight:700'>{team}</span>"
+                    f"</div>"
+
+                    # Elo + barra
+                    f"<div style='margin-bottom:10px'>"
+                    f"<div style='display:flex;justify-content:space-between;"
+                    f"font-size:.82rem;color:#475569;margin-bottom:3px'>"
+                    f"<span>⭐ Elo</span>"
+                    f"<span style='font-weight:700;color:#0f172a'>{sdata['elo']:.0f}</span></div>"
+                    f"<div style='background:#e2e8f0;border-radius:4px;height:7px'>"
+                    f"<div style='width:{elo_pct}%;background:{tc};border-radius:4px;height:7px'></div></div>"
+                    f"</div>"
+
+                    # Forma + barra
+                    f"<div style='margin-bottom:14px'>"
+                    f"<div style='display:flex;justify-content:space-between;"
+                    f"font-size:.82rem;color:#475569;margin-bottom:3px'>"
+                    f"<span>📈 Forma (últ. 10 jogos)</span>"
+                    f"<span style='font-weight:700;color:#0f172a'>{form_pct}%</span></div>"
+                    f"<div style='background:#e2e8f0;border-radius:4px;height:7px'>"
+                    f"<div style='width:{form_pct}%;background:{tc};border-radius:4px;height:7px'></div></div>"
+                    f"</div>"
+
+                    # Grid de métricas 2×2
+                    f"<div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px'>"
+
+                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px'>"
+                    f"<div style='font-size:.72rem;color:#64748b'>⚡ Ataque (aj. oponente)</div>"
+                    f"<div style='font-size:1rem;font-weight:700;color:{tc}'>{sdata.get('adj_attack', sdata['attack']):.2f}</div>"
+                    f"<div style='font-size:.72rem;color:#94a3b8'>bruto {sdata['attack']:.2f} gols/j</div>"
+                    f"</div>"
+
+                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px'>"
+                    f"<div style='font-size:.72rem;color:#64748b'>🛡️ Defesa (aj. oponente)</div>"
+                    f"<div style='font-size:1rem;font-weight:700;color:{tc}'>{sdata.get('adj_defense', sdata['defense']):.2f}</div>"
+                    f"<div style='font-size:.72rem;color:#94a3b8'>bruto {sdata['defense']:.2f} sofridos/j</div>"
+                    f"</div>"
+
+                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px'>"
+                    f"<div style='font-size:.72rem;color:#64748b'>💪 Valor de elenco</div>"
+                    f"<div style='font-size:.95rem;font-weight:700;color:{tc}'>{value_str}</div>"
+                    f"<div style='font-size:.72rem;color:#94a3b8'>Idade méd. {age_str} • FIFA {rank_str}</div>"
+                    f"</div>"
+
+                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px'>"
+                    f"<div style='font-size:.72rem;color:#64748b'>📅 Força de calendário</div>"
+                    f"<div style='font-size:.95rem;font-weight:700;color:{tc}'>{sdata.get('sos', 0):.2f}</div>"
+                    f"<div style='font-size:.72rem;color:#94a3b8'>qualidade dos oponentes</div>"
+                    f"</div>"
+
+                    f"</div>"
+
+                    # Tags de estilo + sequência
+                    f"<div style='display:flex;flex-wrap:wrap;gap:6px;font-size:.78rem'>"
+                    f"<span style='background:{tc}22;color:{tc};border-radius:20px;"
+                    f"padding:3px 10px;font-weight:600'>{style_label}</span>"
+                    f"<span style='background:{tc}22;color:{tc};border-radius:20px;"
+                    f"padding:3px 10px;font-weight:600'>{tempo_label}</span>"
+                    f"<span style='background:#f1f5f9;color:#475569;border-radius:20px;"
+                    f"padding:3px 10px'>{streak_txt}</span>"
+                    f"</div>"
+
+                    f"</div>",
+                    unsafe_allow_html=True,
                 )
 
+        st.divider()
+        st.markdown("#### Últimos 5 jogos")
+        r1, r2 = st.columns(2)
+        for col, team, matches in ((r1, h, res["recent_home"]), (r2, a, res["recent_away"])):
+            with col:
+                st.markdown(f"{flag_img_tag(team, 20)}**{team}**", unsafe_allow_html=True)
+                _COLOR = {"W": ("#16a34a", "#dcfce7"), "D": ("#d97706", "#fef9c3"), "L": ("#dc2626", "#fee2e2")}
+                _LABEL = {"W": "V", "D": "E", "L": "D"}
+                for m in matches:
+                    rc, bg = _COLOR[m["result"]]
+                    lbl = _LABEL[m["result"]]
+                    opp_flag = flag_img_tag(m["opponent"], 18)
+                    tourn = m["tournament"].replace("FIFA World Cup qualification", "Eliminatória WC") \
+                                          .replace("FIFA World Cup", "Copa do Mundo") \
+                                          .replace("Friendly", "Amistoso")
+                    st.markdown(
+                        f"<div style='display:flex;align-items:center;gap:10px;"
+                        f"padding:6px 10px;margin-bottom:5px;border-radius:8px;"
+                        f"background:{bg};border-left:4px solid {rc}'>"
+                        f"<span style='background:{rc};color:#fff;font-weight:700;"
+                        f"border-radius:5px;padding:2px 8px;font-size:.85rem'>{lbl}</span>"
+                        f"<span style='font-size:.95rem;font-weight:600'>"
+                        f"{m['gf']}–{m['ga']}</span>"
+                        f"<span style='flex:1'>{opp_flag}{m['opponent']}</span>"
+                        f"<span style='font-size:.75rem;color:#64748b;text-align:right'>"
+                        f"{m['date']}<br><i>{tourn}</i></span>"
+                        f"</div>",
+                        unsafe_allow_html=True,
+                    )
 
         st.divider()
         with st.expander("📊 Comparar com o mercado (odds das casas de aposta)"):

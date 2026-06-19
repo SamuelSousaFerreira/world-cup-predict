@@ -25,7 +25,7 @@ import joblib
 import numpy as np
 from tabulate import tabulate
 
-from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state
+from feature_engineering import HOME_ADVANTAGE, REST_CAP_DAYS, load_team_state, recent_matches
 from models import CLASSES, combine
 from squad_data import load_squad_table, squad_diffs
 
@@ -205,6 +205,8 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
         "disagreement": result.disagreement,
         "state_home": state[home],
         "state_away": state[away],
+        "recent_home": recent_matches(home, 5),
+        "recent_away": recent_matches(away, 5),
     }
 
 

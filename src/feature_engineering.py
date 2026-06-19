@@ -330,6 +330,39 @@ def load_team_state() -> dict:
         return json.load(f)
 
 
+def recent_matches(team: str, n: int = 5) -> list[dict]:
+    """Retorna os últimos *n* jogos oficiais de *team* (ordem cronológica, do mais antigo ao mais recente).
+
+    Cada dict contém: date (str), opponent (str), gf (int), ga (int),
+    result ("W"/"D"/"L" da perspectiva do time), tournament (str), neutral (bool).
+    """
+    df = load_results()
+    mask = (df["home_team"] == team) | (df["away_team"] == team)
+    sub = df[mask].sort_values("date", ascending=False).head(n)
+    records = []
+    for r in sub.itertuples(index=False):
+        is_home = r.home_team == team
+        gf = int(r.home_score) if is_home else int(r.away_score)
+        ga = int(r.away_score) if is_home else int(r.home_score)
+        opponent = r.away_team if is_home else r.home_team
+        if gf > ga:
+            result = "W"
+        elif gf == ga:
+            result = "D"
+        else:
+            result = "L"
+        records.append({
+            "date": pd.Timestamp(r.date).strftime("%d/%m/%Y"),
+            "opponent": opponent,
+            "gf": gf,
+            "ga": ga,
+            "result": result,
+            "tournament": r.tournament,
+            "neutral": bool(r.neutral),
+        })
+    return records
+
+
 if __name__ == "__main__":
     matches = load_results()
     train, state = build_features(matches)
