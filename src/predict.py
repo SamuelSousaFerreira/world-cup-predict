@@ -138,6 +138,58 @@ def fmt_pct(p: np.ndarray) -> list[str]:
     return [f"{x * 100:5.1f}%" for x in p]
 
 
+def compute_prediction(home: str, away: str, neutral: bool = False,
+                       importance: float = 0.85, state: dict | None = None,
+                       models: dict | None = None, weights: dict | None = None,
+                       squad_table: dict | None = None,
+                       ref_date: date | None = None) -> dict:
+    """Calcula a previsão de um confronto e devolve um dicionário (sem prints).
+
+    Reaproveitável por interfaces (CLI, Streamlit, API). Aceita estado/modelos
+    pré-carregados para evitar recarregar a cada chamada.
+    """
+    if state is None:
+        state = load_team_state()
+    if models is None:
+        models = load_models()
+    if weights is None:
+        weights = load_weights()
+    if squad_table is None:
+        squad_table = load_squad_table()
+
+    home = resolve_team(home, state)
+    away = resolve_team(away, state)
+    feats = build_matchup_features(home, away, state, neutral, importance, ref_date)
+    # squad_diffs já é aplicado dentro de build_matchup_features; squad_table é
+    # passado adiante apenas para manter a assinatura coerente/futuras extensões.
+
+    probs = {name: m.predict_proba(feats) for name, m in models.items()}
+    score = models["Poisson"].most_likely_score(feats)
+    result = combine(probs, score, weights=weights)
+
+    # Distribuição de placares (Poisson) — top placares mais prováveis.
+    m = models["Poisson"].score_matrix(feats)
+    flat = np.argsort(m.ravel())[::-1][:8]
+    top_scores = []
+    for idx in flat:
+        i, j = np.unravel_index(idx, m.shape)
+        top_scores.append((int(i), int(j), float(m[i, j])))
+
+    return {
+        "home": home,
+        "away": away,
+        "neutral": neutral,
+        "probs": probs,                 # {modelo: np.array([H, D, A])}
+        "ensemble": result.ensemble,    # np.array([H, D, A])
+        "most_likely_score": result.most_likely_score,
+        "top_scores": top_scores,       # [(gh, ga, prob), ...]
+        "diverges": result.diverges,
+        "disagreement": result.disagreement,
+        "state_home": state[home],
+        "state_away": state[away],
+    }
+
+
 def predict(home: str, away: str, neutral: bool = False, importance: float = 0.85) -> None:
     state = load_team_state()
     models = load_models()

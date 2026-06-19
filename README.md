@@ -142,12 +142,27 @@ Favorito ao título: Argentina (27.1%)
 Cada partida do mata-mata usa o ensemble (em campo neutro, com pênaltis no
 empate) e o torneio é repetido milhares de vezes (Monte Carlo).
 
+### 4. Interface web (Streamlit)
+
+```powershell
+.\venv\Scripts\streamlit.exe run app.py
+```
+
+Abre uma interface no navegador com duas abas:
+
+- **Previsão de jogo** — escolha mandante/visitante, campo neutro e importância;
+  veja probabilidades por modelo e do ensemble, placares mais prováveis, forças
+  atuais e comparação opcional com o mercado (devig de odds).
+- **Simulação de mata-mata** — monte um bracket (potência de 2) e rode o Monte
+  Carlo para ver a probabilidade de título de cada seleção.
+
 ## Estrutura
 
 ```
 world-cup/
 ├── requirements.txt
 ├── README.md
+├── app.py                      # interface web (Streamlit): jogo + mata-mata
 ├── src/
 │   ├── data_collection.py      # download + cache da base pública
 │   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo
