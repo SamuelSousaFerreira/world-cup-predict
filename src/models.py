@@ -240,7 +240,9 @@ class _CalibratedBoost:
         raise NotImplementedError
 
     def fit(self, df: pd.DataFrame, sample_weight: np.ndarray | None = None):
-        X = df[ML_ALL_FEATURES].to_numpy(dtype=float)
+        # Preserva os nomes das features (DataFrame) para que LightGBM/XGBoost/CatBoost
+        # não emitam warnings de feature names inconsistentes em predict.
+        X = df[ML_ALL_FEATURES].astype(float)
         y = df["result"].map(_Y2I).to_numpy()
         self.clf = CalibratedClassifierCV(self._make_base(), method="isotonic", cv=3)
         self.clf.fit(X, y, sample_weight=sample_weight)
@@ -248,7 +250,8 @@ class _CalibratedBoost:
         return self
 
     def predict_proba(self, feats: dict) -> np.ndarray:
-        X = np.array([[feats.get(f, np.nan) for f in ML_ALL_FEATURES]], dtype=float)
+        X = pd.DataFrame([[feats.get(f, np.nan) for f in ML_ALL_FEATURES]],
+                         columns=ML_ALL_FEATURES)
         proba = self.clf.predict_proba(X)[0]
         # classes_ são inteiros 0/1/2 -> reordena para [H, D, A].
         d = {CLASSES[int(c)]: p for c, p in zip(self.clf.classes_, proba)}

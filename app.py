@@ -14,6 +14,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
+import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -26,8 +27,26 @@ from predict import compute_prediction, load_models, load_weights  # noqa: E402
 from squad_data import load_squad_table  # noqa: E402
 from simulate_tournament import (MatchPredictor, default_bracket,  # noqa: E402
                                  run as run_tournament)
+from team_assets import (DRAW_COLOR, flag_img_tag, flag_url,  # noqa: E402
+                         lighten, pair_colors, team_color)
 
 st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout="wide")
+
+# ----------------------------- Estilo (CSS) --------------------------------- #
+st.markdown(
+    """
+    <style>
+      .block-container {padding-top: 2.2rem; max-width: 1280px;}
+      [data-testid="stMetricValue"] {font-size: 1.7rem;}
+      [data-testid="stMetricLabel"] {font-weight: 600;}
+      div[data-testid="stExpander"] details {border-radius: 10px;}
+      .stTabs [data-baseweb="tab"] {font-size: 1rem; font-weight: 600;}
+      h3 {margin-top: 0.4rem;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 
 
@@ -66,6 +85,105 @@ def devig(odds: list[float]) -> np.ndarray | None:
     return inv / inv.sum()
 
 
+# --------------------------- Gráficos (Altair) ------------------------------ #
+def scoreline_heatmap(matrix: np.ndarray, home: str, away: str,
+                      home_color: str, max_goals: int = 6) -> alt.Chart:
+    """Mapa de calor das probabilidades de placar exato (gols mandante × visitante)."""
+    m = matrix[: max_goals + 1, : max_goals + 1]
+    rows = [
+        {"home_goals": i, "away_goals": j, "prob": float(m[i, j])}
+        for i in range(m.shape[0])
+        for j in range(m.shape[1])
+    ]
+    df = pd.DataFrame(rows)
+    peak = df["prob"].max()
+    base = alt.Chart(df).encode(
+        x=alt.X("away_goals:O", title=f"Gols {away}"),
+        y=alt.Y("home_goals:O", title=f"Gols {home}", sort="descending"),
+    )
+    heat = base.mark_rect().encode(
+        color=alt.Color("prob:Q", title="Prob.",
+                        scale=alt.Scale(range=["#ffffff", lighten(home_color, 0.20)]),
+                        legend=alt.Legend(format=".0%")),
+        tooltip=[alt.Tooltip("home_goals:O", title=f"{home}"),
+                 alt.Tooltip("away_goals:O", title=f"{away}"),
+                 alt.Tooltip("prob:Q", title="Probabilidade", format=".2%")],
+    )
+    labels = base.mark_text(fontSize=11).encode(
+        text=alt.Text("prob:Q", format=".0%"),
+        color=alt.condition(alt.datum.prob > peak * 0.55,
+                            alt.value("#0f172a"), alt.value("#475569")),
+    )
+    return (heat + labels).properties(height=300)
+
+
+def goal_distribution_chart(home_dist: np.ndarray, away_dist: np.ndarray,
+                            home: str, away: str,
+                            home_color: str, away_color: str,
+                            max_goals: int = 6) -> alt.Chart:
+    """Barras agrupadas: P(seleção marcar k gols) para mandante e visitante."""
+    rows = []
+    for k in range(max_goals + 1):
+        rows.append({"goals": k, "team": home, "prob": float(home_dist[k])})
+        rows.append({"goals": k, "team": away, "prob": float(away_dist[k])})
+    df = pd.DataFrame(rows)
+    return (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x=alt.X("goals:O", title="Gols marcados"),
+            xOffset="team:N",
+            y=alt.Y("prob:Q", title="Probabilidade", axis=alt.Axis(format="%")),
+            color=alt.Color("team:N", title="Seleção",
+                            scale=alt.Scale(domain=[home, away],
+                                            range=[home_color, away_color])),
+            tooltip=[alt.Tooltip("team:N", title="Seleção"),
+                     alt.Tooltip("goals:O", title="Gols"),
+                     alt.Tooltip("prob:Q", title="Probabilidade", format=".1%")],
+        )
+        .properties(height=260)
+    )
+
+
+def outcome_bar(ens: np.ndarray, home: str, away: str,
+                home_color: str, away_color: str) -> alt.Chart:
+    """Barras horizontais do resultado (1X2) do ensemble, nas cores das seleções."""
+    labels = [f"{home} vence", "Empate", f"{away} vence"]
+    df = pd.DataFrame({"Resultado": labels, "Probabilidade": ens})
+    bars = alt.Chart(df).mark_bar().encode(
+        x=alt.X("Probabilidade:Q", axis=alt.Axis(format="%"), title=None),
+        y=alt.Y("Resultado:N", sort=labels, title=None),
+        color=alt.Color("Resultado:N", legend=None,
+                        scale=alt.Scale(domain=labels,
+                                        range=[home_color, DRAW_COLOR, away_color])),
+        tooltip=[alt.Tooltip("Resultado:N"),
+                 alt.Tooltip("Probabilidade:Q", format=".1%")],
+    )
+    text = alt.Chart(df).mark_text(align="left", dx=4, fontWeight="bold").encode(
+        x="Probabilidade:Q", y=alt.Y("Resultado:N", sort=labels),
+        text=alt.Text("Probabilidade:Q", format=".1%"),
+    )
+    return (bars + text).properties(height=150)
+
+
+# ------------------------------ Startup guard ------------------------------- #
+@st.cache_resource(show_spinner=False)
+def _check_models_exist() -> bool:
+    from pathlib import Path
+    needed = ["elo_model.joblib", "poisson_model.joblib", "ml_model.joblib"]
+    return all((Path(__file__).parent / "models" / n).exists() for n in needed)
+
+
+if not _check_models_exist():
+    st.error(
+        "**Modelos não encontrados.** Execute primeiro:\n\n"
+        "```\npython src/train.py\n```\n\n"
+        "O treino baixa os dados, treina os modelos e salva em `models/`. "
+        "Leva alguns minutos na primeira vez."
+    )
+    st.stop()
+
+
 # ------------------------------- Sidebar ------------------------------------ #
 state = get_state()
 models = get_models()
@@ -82,7 +200,14 @@ if weights:
     wtxt = " · ".join(f"{k} {v:.2f}" for k, v in weights.items() if v > 0.01)
     st.sidebar.caption(f"Pesos: {wtxt}")
 
+st.title("⚽ Previsor da Copa do Mundo")
+st.caption(
+    "Probabilidades de resultado e de gols a partir de um ensemble de seis "
+    "modelos treinados em ~49 mil partidas oficiais de seleções."
+)
+
 tab_jogo, tab_torneio = st.tabs(["🎯 Previsão de jogo", "🏆 Simulação de mata-mata"])
+
 
 
 # =========================== ABA 1: JOGO ÚNICO ============================== #
@@ -109,14 +234,34 @@ with tab_jogo:
     if res:
         h, a = res["home"], res["away"]
         ens = res["ensemble"]
+        eg_h, eg_a = res["expected_goals"]
+        gi, gj, gp = res["most_likely_score"]
+        hc, ac = pair_colors(h, a)
         venue = "campo neutro" if res["neutral"] else f"{h} como mandante"
-        st.subheader(f"{h} × {a} — {venue}")
+        st.markdown(
+            f"<h3>{flag_img_tag(h, 30)}{h} "
+            f"<span style='color:#94a3b8;font-weight:400'>×</span> "
+            f"{flag_img_tag(a, 30)}{a} "
+            f"<span style='font-weight:400;color:#64748b;font-size:1rem'>— {venue}</span></h3>",
+            unsafe_allow_html=True,
+        )
 
-        m1, m2, m3 = st.columns(3)
+        m1, m2, m3, m4 = st.columns(4)
         m1.metric(f"{h} vence", f"{ens[0]*100:.1f}%")
         m2.metric("Empate", f"{ens[1]*100:.1f}%")
         m3.metric(f"{a} vence", f"{ens[2]*100:.1f}%")
+        m4.metric("Placar provável", f"{gi}–{gj}", f"{gp*100:.1f}% • xG {eg_h:.2f}–{eg_a:.2f}",
+                  delta_color="off")
 
+        if res["diverges"]:
+            st.warning(
+                f"⚠️ Modelos divergem no favorito "
+                f"(dispersão {res['disagreement']*100:.1f} pp). Decisão humana recomendada."
+            )
+        else:
+            st.success("✓ Modelos concordam no favorito.")
+
+        st.markdown("#### Resultado (1X2)")
         left, right = st.columns([3, 2])
         with left:
             st.markdown("**Probabilidades por modelo**")
@@ -131,39 +276,60 @@ with tab_jogo:
                 df.style.format("{:.1%}").background_gradient(cmap="Greens", axis=1),
                 width="stretch",
             )
-
-            st.markdown("**Probabilidade do ensemble**")
-            chart_df = pd.DataFrame(
-                {"Resultado": [f"{h}", "Empate", f"{a}"], "Probabilidade": ens}
-            ).set_index("Resultado")
-            st.bar_chart(chart_df, height=220)
-
         with right:
-            st.markdown("**Placares mais prováveis (Poisson)**")
-            sc = pd.DataFrame(
-                [{"Placar": f"{h} {i} × {j} {a}", "Prob.": p}
-                 for i, j, p in res["top_scores"]]
-            ).set_index("Placar")
-            st.dataframe(sc.style.format({"Prob.": "{:.1%}"}), width="stretch")
-
-            if res["diverges"]:
-                st.warning(
-                    f"⚠️ Modelos divergem no favorito "
-                    f"(dispersão {res['disagreement']*100:.1f} pp). Decisão humana recomendada."
-                )
-            else:
-                st.success("✓ Modelos concordam no favorito.")
+            st.markdown("**Probabilidade do ensemble**")
+            st.altair_chart(outcome_bar(ens, h, a, hc, ac), width="stretch")
 
         st.divider()
-        st.markdown("**Forças atuais**")
+        st.markdown("#### Probabilidades de gols")
+        g_left, g_right = st.columns([3, 2])
+        with g_left:
+            st.markdown("**Mapa de calor dos placares** (gols mandante × visitante)")
+            st.altair_chart(
+                scoreline_heatmap(res["score_matrix"], h, a, hc),
+                width="stretch",
+            )
+            st.markdown("**Distribuição de gols por seleção**")
+            st.altair_chart(
+                goal_distribution_chart(res["home_goal_dist"], res["away_goal_dist"],
+                                        h, a, hc, ac),
+                width="stretch",
+            )
+        with g_right:
+
+            st.markdown("**Placares mais prováveis**")
+            sc = pd.DataFrame(
+                [{"Placar": f"{i}–{j}", "Prob.": p} for i, j, p in res["top_scores"]]
+            ).set_index("Placar")
+            st.dataframe(
+                sc.style.format({"Prob.": "{:.1%}"}).background_gradient(
+                    cmap="Blues", subset=["Prob."]),
+                width="stretch",
+            )
+
+            st.markdown("**Mercados de gols**")
+            ou = res["over_under"]
+            mk = pd.DataFrame(
+                [{"Mercado": f"Mais de {thr} gols", "Prob.": p} for thr, p in ou.items()]
+                + [{"Mercado": "Ambas marcam", "Prob.": res["btts"]}]
+            ).set_index("Mercado")
+            st.dataframe(
+                mk.style.format({"Prob.": "{:.1%}"}).background_gradient(
+                    cmap="Blues", subset=["Prob."]),
+                width="stretch",
+            )
+
+        st.divider()
+        st.markdown("#### Forças atuais")
         f1, f2 = st.columns(2)
         for col, team, sdata in ((f1, h, res["state_home"]), (f2, a, res["state_away"])):
             with col:
-                st.markdown(f"**{team}**")
+                st.markdown(f"{flag_img_tag(team, 22)}**{team}**", unsafe_allow_html=True)
                 st.caption(
                     f"Elo {sdata['elo']:.0f} • forma {sdata['form']*100:.0f}% • "
                     f"ataque {sdata['attack']:.2f} • defesa {sdata['defense']:.2f}"
                 )
+
 
         st.divider()
         with st.expander("📊 Comparar com o mercado (odds das casas de aposta)"):
@@ -226,11 +392,47 @@ with tab_torneio:
     out = st.session_state.get("tourney")
     if out:
         st.subheader("Probabilidade de título")
-        tdf = pd.DataFrame(out, columns=["Seleção", "P(título)"]).set_index("Seleção")
+        teams = [t for t, _ in out]
+        probs = [p for _, p in out]
         c1, c2 = st.columns([2, 3])
         with c1:
-            st.dataframe(tdf.style.format({"P(título)": "{:.1%}"}), width="stretch")
+            tdf = pd.DataFrame({
+                "": [flag_url(t, 40) for t in teams],
+                "Seleção": teams,
+                "P(título)": probs,
+            })
+            st.dataframe(
+                tdf,
+                width="stretch",
+                hide_index=True,
+                column_config={
+                    "": st.column_config.ImageColumn("🏳️", width="small"),
+                    "P(título)": st.column_config.ProgressColumn(
+                        "P(título)", format="percent",
+                        min_value=0.0, max_value=float(max(probs))),
+                },
+            )
         with c2:
-            st.bar_chart(tdf, height=max(220, len(tdf) * 28))
+            cdf = pd.DataFrame({"Seleção": teams, "P(título)": probs})
+            chart = (
+                alt.Chart(cdf)
+                .mark_bar()
+                .encode(
+                    x=alt.X("P(título):Q", axis=alt.Axis(format="%"), title=None),
+                    y=alt.Y("Seleção:N", sort=teams, title=None),
+                    color=alt.Color("Seleção:N", legend=None,
+                                    scale=alt.Scale(domain=teams,
+                                                    range=[team_color(t) for t in teams])),
+                    tooltip=[alt.Tooltip("Seleção:N"),
+                             alt.Tooltip("P(título):Q", format=".1%")],
+                )
+                .properties(height=max(220, len(teams) * 30))
+            )
+            st.altair_chart(chart, width="stretch")
         champ, p = out[0]
-        st.success(f"🏆 Favorito ao título: **{champ}** ({p*100:.1f}%)")
+        st.markdown(
+            f"<div style='font-size:1.05rem'>🏆 Favorito ao título: "
+            f"{flag_img_tag(champ, 24)}<b>{champ}</b> ({p*100:.1f}%)</div>",
+            unsafe_allow_html=True,
+        )
+

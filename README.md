@@ -20,8 +20,9 @@ pré-jogo), as features pedidas:
 | **Elo** | Rating dinâmico com vantagem de mando e peso por importância do torneio |
 | **Mando / Importância** | Campo neutro e peso do torneio (Copa do Mundo > eliminatória > amistoso) |
 | **Força de elenco** | Valor de mercado, idade média e ranking FIFA do elenco ([Transfermarkt](https://github.com/dcaribou/transfermarkt-datasets), CC0) |
+| **Forma/contexto avançados** | EWMA da forma, ataque/defesa ajustados pela força do oponente, força de calendário (SoS), sequência, descanso e amplitude da janela |
 
-## Três modelos (com prós e contras)
+## Seis modelos (com prós e contras)
 
 Cada modelo gera probabilidades de forma **independente**. Quando discordam do
 favorito, o sistema emite um alerta de **DIVERGÊNCIA** — cabe ao humano decidir.
@@ -29,12 +30,19 @@ favorito, o sistema emite um alerta de **DIVERGÊNCIA** — cabe ao humano decid
 | Modelo | Abordagem | Prós | Contras |
 |---|---|---|---|
 | **Elo** | Regressão logística sobre rating | Robusto, interpretável, ótimo p/ força relativa | Ignora forma e estilo; não dá placar |
-| **Poisson** | Força ataque × defesa → gols esperados | Modela ataque/defesa; gera placar provável | Assume independência; sensível a goleadas |
-| **ML** | Gradient Boosting calibrado (todas as features + força de elenco) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
+| **Poisson** | Força ataque × defesa → gols esperados (com Dixon-Coles) | Modela ataque/defesa; gera placar provável | Assume independência; sensível a goleadas |
+| **ML** | HistGradientBoosting calibrado (todas as features) | Captura interações não lineares; bem calibrado | Caixa-preta; precisa de dados |
+| **CatBoost** | Gradient boosting calibrado | Robusto, bom com NaN; forte no ensemble | Caixa-preta; treino mais lento |
+| **LightGBM** | Gradient boosting calibrado | Rápido; captura interações | Caixa-preta; pode superajustar |
+| **XGBoost** | Gradient boosting calibrado | Forte e regularizado | Caixa-preta; ganho marginal |
 
-O **Ensemble** combina as três probabilidades com **pesos otimizados** (em vez de
-média simples): os pesos que minimizam o log loss numa janela de validação são
-aprendidos automaticamente e salvos. Atualmente: ML ~0.56, Poisson ~0.23, Elo ~0.20.
+Os três boostings (CatBoost, LightGBM, XGBoost) treinam sobre o mesmo conjunto
+de features do ML e são todos **calibrados** (isotônica). O **Ensemble** combina
+as seis probabilidades com **pesos otimizados** (em vez de média simples): os
+pesos que minimizam o log loss numa janela de validação são aprendidos
+automaticamente e salvos. Atualmente: CatBoost ~0.42, LightGBM ~0.23, Elo ~0.18,
+Poisson ~0.17 (ML e XGBoost ficam ~0, pois suas previsões já são quase
+redundantes com os demais).
 
 ### Melhorias aplicadas
 
@@ -44,14 +52,18 @@ aprendidos automaticamente e salvos. Atualmente: ML ~0.56, Poisson ~0.23, Elo ~0
   placares baixos (0-0, 1-0, 0-1, 1-1), onde o Poisson puro erra mais.
 - **Ensemble com pesos otimizados** — minimiza log loss numa janela de validação
   temporal separada (não usa o teste), evitando vazamento.
+- **Mais modelos no ensemble** — CatBoost, LightGBM e XGBoost (calibrados) se
+  somam ao Elo, Poisson e ML, reduzindo o log loss do ensemble.
 - **Simulação de Monte Carlo de torneio** — estima a probabilidade de cada
   seleção ser campeã simulando milhares de chaveamentos (ver abaixo).
 - **Força de elenco (Transfermarkt)** — valor de mercado, idade média e ranking
-  FIFA do elenco entram como features do ML. É um *snapshot atual* aplicado a
-  todos os jogos; o decaimento temporal faz só os recentes pesarem, onde o
-  snapshot é uma boa aproximação. Seleções sem cobertura recebem `NaN`, tratado
-  nativamente pelo HistGradientBoosting. Ganho medido no teste: log loss
-  0.876 → 0.869, acurácia +0.5pp.
+  FIFA do elenco entram como features dos modelos de árvore. É um *snapshot
+  atual* aplicado a todos os jogos; o decaimento temporal faz só os recentes
+  pesarem, onde o snapshot é uma boa aproximação. Seleções sem cobertura recebem
+  `NaN`, tratado nativamente pelos modelos de árvore.
+- **Features de contexto avançadas (v2)** — forma com EWMA, ataque/defesa
+  ajustados pela força do oponente, força de calendário (SoS), sequência de
+  resultados, dias de descanso e amplitude da janela de jogos.
 
 ### Desempenho (backtest temporal, ~4.800 jogos recentes)
 
@@ -59,9 +71,12 @@ aprendidos automaticamente e salvos. Atualmente: ML ~0.56, Poisson ~0.23, Elo ~0
 |---|---|---|---|
 | Elo | 0.604 | 0.874 | 0.514 |
 | Poisson | 0.595 | 0.948 | 0.541 |
-| ML | 0.608 | 0.872 | 0.512 |
-| Ensemble (média) | 0.605 | 0.872 | 0.513 |
-| **Ensemble (pesos)** | **0.605** | **0.869** | **0.511** |
+| ML | 0.611 | 0.866 | 0.509 |
+| CatBoost | 0.605 | 0.866 | 0.509 |
+| LightGBM | 0.603 | 0.873 | 0.510 |
+| XGBoost | 0.607 | 0.868 | 0.510 |
+| **Ensemble (média)** | **0.608** | **0.862** | **0.507** |
+| Ensemble (pesos) | 0.607 | 0.863 | 0.508 |
 | Baseline (classe majoritária) | 0.477 | — | — |
 
 Validação **temporal em três blocos** (treino → validação → teste): treina no
@@ -106,6 +121,9 @@ Saída de exemplo:
 |      Elo |     23.9% |  26.5% |         49.6% |
 |  Poisson |     12.0% |  22.0% |         66.0% |
 |       ML |     22.1% |  20.2% |         57.7% |
+| CatBoost |     21.4% |  21.0% |         57.6% |
+| LightGBM |     20.8% |  21.3% |         57.9% |
+|  XGBoost |     22.0% |  20.5% |         57.5% |
 | ENSEMBLE |     19.3% |  22.9% |         57.8% |
 
 Placar mais provável (Poisson): Brazil 1 x 2 Argentina
@@ -163,11 +181,12 @@ world-cup/
 ├── requirements.txt
 ├── README.md
 ├── app.py                      # interface web (Streamlit): jogo + mata-mata
+├── experiment_squad.py         # experimento A/B das features de elenco
 ├── src/
 │   ├── data_collection.py      # download + cache da base pública
-│   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo
+│   ├── feature_engineering.py  # Elo, forma, ataque, defesa, estilo + features v2
 │   ├── squad_data.py           # força de elenco (valor/idade/ranking) via Transfermarkt
-│   ├── models.py               # Elo / Poisson(Dixon-Coles) / ML + ensemble ponderado
+│   ├── models.py               # Elo / Poisson(Dixon-Coles) / ML / CatBoost / LightGBM / XGBoost + ensemble ponderado
 │   ├── train.py                # treino, decaimento temporal, backtest, pesos
 │   ├── predict.py              # CLI de previsão de confronto
 │   └── simulate_tournament.py  # simulação Monte Carlo do mata-mata

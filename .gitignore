@@ -1,13 +1,19 @@
-# Virtual environment
+# Ambiente virtual e bytecode
 venv/
 __pycache__/
 *.pyc
+*.pyo
 
-# Dados baixados e artefatos de modelo (regeneráveis via train.py)
+# Dados brutos — baixados automaticamente por data_collection.py
 data/raw/
-data/processed/
-data/squad/
-models/
 
-# Logs do CatBoost
+# Dataset de treino completo — grande e regenerável via train.py
+data/processed/training_data.csv
+
+# Logs e artefatos temporários do CatBoost
 catboost_info/
+
+# Arquivos que DEVEM ser commitados (necessários para o deploy):
+#   models/*.joblib          — modelos treinados (~26 MB no total)
+#   data/processed/team_state.json  — estado atual das seleções
+#   data/squad/              — cache do Transfermarkt

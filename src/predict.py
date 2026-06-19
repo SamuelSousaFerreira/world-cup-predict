@@ -167,13 +167,25 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
     score = models["Poisson"].most_likely_score(feats)
     result = combine(probs, score, weights=weights)
 
-    # Distribuição de placares (Poisson) — top placares mais prováveis.
+    # Distribuição de placares (Poisson) — matriz completa + top placares.
     m = models["Poisson"].score_matrix(feats)
     flat = np.argsort(m.ravel())[::-1][:8]
     top_scores = []
     for idx in flat:
         i, j = np.unravel_index(idx, m.shape)
         top_scores.append((int(i), int(j), float(m[i, j])))
+
+    # Distribuições marginais de gols (probabilidade de cada seleção marcar k gols).
+    home_goal_dist = m.sum(axis=1)   # P(mandante marca k)
+    away_goal_dist = m.sum(axis=0)   # P(visitante marca k)
+    exp_home, exp_away = models["Poisson"].expected_goals(feats)
+
+    # Mercados derivados da matriz de placares.
+    total_goals = np.add.outer(np.arange(m.shape[0]), np.arange(m.shape[1]))
+    over_under = {
+        thr: float(m[total_goals > thr].sum()) for thr in (0.5, 1.5, 2.5, 3.5)
+    }
+    btts = float(m[1:, 1:].sum())    # ambos marcam (both teams to score)
 
     return {
         "home": home,
@@ -183,6 +195,12 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
         "ensemble": result.ensemble,    # np.array([H, D, A])
         "most_likely_score": result.most_likely_score,
         "top_scores": top_scores,       # [(gh, ga, prob), ...]
+        "score_matrix": m,              # [gh, ga] -> probabilidade do placar exato
+        "home_goal_dist": home_goal_dist,
+        "away_goal_dist": away_goal_dist,
+        "expected_goals": (float(exp_home), float(exp_away)),
+        "over_under": over_under,        # {limiar: P(total > limiar)}
+        "btts": btts,                    # P(ambas marcam)
         "diverges": result.diverges,
         "disagreement": result.disagreement,
         "state_home": state[home],
