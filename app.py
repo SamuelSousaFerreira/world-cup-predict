@@ -34,7 +34,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-20.1"
+APP_BUILD = "2026-06-20.2"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -273,6 +273,10 @@ with tab_jogo:
         f1, f2 = st.columns(2)
         _all_elos = [v["elo"] for v in state.values()]
         _elo_min, _elo_max = min(_all_elos), max(_all_elos)
+        # Posição no nosso ranking (por Elo, atualizado diariamente). Substitui o
+        # antigo "ranking FIFA" do snapshot do Transfermarkt, que ficava defasado.
+        _elo_rank = {t: i for i, (t, _) in enumerate(
+            sorted(state.items(), key=lambda kv: -kv[1]["elo"]), start=1)}
         for col, team, sdata, tc in ((f1, h, res["state_home"], hc), (f2, a, res["state_away"], ac)):
             sq = squad_table.get(team, {})
             streak = sdata.get("streak", 0)
@@ -297,7 +301,7 @@ with tab_jogo:
             )
             value_str = f"€{sq['value']/1e6:.0f}M" if sq.get("value") else "—"
             age_str   = f"{sq['age']:.1f} anos"    if sq.get("age")   else "—"
-            rank_str  = f"#{int(sq['fifa_rank'])}"  if sq.get("fifa_rank") else "—"
+            rank_str  = f"#{_elo_rank[team]}"       if team in _elo_rank else "—"
             with col:
                 st.markdown(
                     f"<div style='border:1px solid {tc}55;border-radius:12px;"
@@ -329,10 +333,10 @@ with tab_jogo:
                     f"<div style='font-size:1rem;font-weight:700;color:{tc}'>{sdata.get('adj_defense', sdata['defense']):.2f}</div>"
                     f"<div style='font-size:.72rem;color:#94a3b8'>bruto {sdata['defense']:.2f} sofridos/j</div>"
                     f"</div>"
-                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px' title='Valor de mercado total do elenco em euros (fonte: Transfermarkt). Proxy da qualidade individual dos jogadores. Abaixo: idade média do elenco e posição no ranking FIFA.'>"
+                    f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px' title='Valor de mercado total do elenco em euros (fonte: Transfermarkt). Proxy da qualidade individual dos jogadores. Abaixo: idade média do elenco e posição no nosso ranking (por Elo, atualizado diariamente).'>"
                     f"<div style='font-size:.72rem;color:#64748b'>💪 Valor de elenco</div>"
                     f"<div style='font-size:.95rem;font-weight:700;color:{tc}'>{value_str}</div>"
-                    f"<div style='font-size:.72rem;color:#94a3b8'>Idade méd. {age_str} • FIFA {rank_str}</div>"
+                    f"<div style='font-size:.72rem;color:#94a3b8'>Idade méd. {age_str} • Rank {rank_str}</div>"
                     f"</div>"
                     f"<div style='background:#f8fafc;border-radius:8px;padding:8px 10px' title='Strength of Schedule (SoS): Elo médio dos adversários nos jogos recentes, normalizado entre 0 e 1. Alto = calendário difícil; baixo = calendário fácil. Contextualiza se a forma foi conquistada com mérito.'>"
                     f"<div style='font-size:.72rem;color:#64748b'>📅 Força de calendário</div>"
