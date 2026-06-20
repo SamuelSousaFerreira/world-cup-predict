@@ -49,6 +49,12 @@ jobs:
           if git diff --staged --quiet; then
             echo "Nenhuma mudança nos modelos — nada a commitar."
           else
+            # Há dados novos: atualiza a marca de build no entry-script para
+            # forçar o Streamlit Cloud a recarregar o app.py (e não servir o
+            # código antigo em cache após um commit só de dados).
+            STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            sed -i -E "s/^APP_BUILD = .*/APP_BUILD = \"${STAMP}\"/" app.py
+            git add app.py
             git commit -m "chore: retreino diário com dados de $(date -u +%F)"
             git push
           fi
