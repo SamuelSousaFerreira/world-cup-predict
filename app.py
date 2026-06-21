@@ -34,7 +34,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-21T10:23:19Z"
+APP_BUILD = "2026-06-21T13:30:00Z-cachefix"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -55,23 +55,28 @@ st.markdown(
 
 
 # --------------------------- Cache de recursos ------------------------------ #
+# O parâmetro `build` (default = APP_BUILD) entra na chave de cache do Streamlit.
+# Como o APP_BUILD é bumpado a cada retreino diário, a chave muda e o cache é
+# invalidado automaticamente — garantindo que o app recarregue o team_state.json
+# e os modelos novos mesmo que o processo do Streamlit Cloud continue "quente"
+# (sem isso, o @st.cache_resource serviria dados antigos indefinidamente).
 @st.cache_resource(show_spinner=False)
-def get_state() -> dict:
+def get_state(build: str = APP_BUILD) -> dict:
     return load_team_state()
 
 
 @st.cache_resource(show_spinner=False)
-def get_models() -> dict:
+def get_models(build: str = APP_BUILD) -> dict:
     return load_models()
 
 
 @st.cache_resource(show_spinner=False)
-def get_weights() -> dict | None:
+def get_weights(build: str = APP_BUILD) -> dict | None:
     return load_weights()
 
 
 @st.cache_resource(show_spinner=False)
-def get_squad_table() -> dict:
+def get_squad_table(build: str = APP_BUILD) -> dict:
     return load_squad_table()
 
 
