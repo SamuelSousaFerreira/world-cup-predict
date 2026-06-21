@@ -209,6 +209,18 @@ if weights:
     wtxt = " · ".join(f"{k} {v:.2f}" for k, v in weights.items() if v > 0.01)
     st.sidebar.caption(f"Pesos: {wtxt}")
 
+# Selo de versão/dados: permite confirmar visualmente qual build está no ar e
+# até quando os dados foram atualizados (útil para diagnosticar cache/redeploy).
+try:
+    _last = max(
+        (s.get("last_date") for s in state.values() if s.get("last_date")),
+        default=None,
+    )
+    _data_txt = str(_last)[:10] if _last else "—"
+except Exception:
+    _data_txt = "—"
+st.sidebar.caption(f"Build: `{APP_BUILD}` • dados até {_data_txt}")
+
 st.sidebar.divider()
 st.sidebar.markdown(
     "[![GitHub](https://img.shields.io/badge/GitHub-Repositório-181717?logo=github&logoColor=white)]"
