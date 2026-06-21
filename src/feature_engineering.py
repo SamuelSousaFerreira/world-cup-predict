@@ -133,6 +133,10 @@ class TeamState:
     opp_elo: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
     exp_score: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
     dates: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
+    # Registros completos dos últimos jogos (para o painel "Últimos jogos" do app),
+    # já no formato de exibição. Salvos no team_state.json para o app não precisar
+    # rebaixar o results.csv (que ficava em cache velho no Streamlit Cloud).
+    recent: deque = field(default_factory=lambda: deque(maxlen=FORM_WINDOW))
     last_date: object = None
     games: int = 0
 
@@ -178,7 +182,8 @@ class TeamState:
         }
 
     def update(self, gf: int, ga: int, opp_elo: float = ELO_START,
-               exp_score: float = 0.5, date=None) -> None:
+               exp_score: float = 0.5, date=None, opponent: str | None = None,
+               tournament: str = "", neutral: bool = False) -> None:
         self.goals_for.append(gf)
         self.goals_against.append(ga)
         self.opp_elo.append(opp_elo)
@@ -192,6 +197,16 @@ class TeamState:
             self.points.append(1)
         else:
             self.points.append(0)
+        result = "W" if gf > ga else ("D" if gf == ga else "L")
+        self.recent.append({
+            "date": pd.Timestamp(date).strftime("%d/%m/%Y") if date is not None else "",
+            "opponent": opponent or "",
+            "gf": int(gf),
+            "ga": int(ga),
+            "result": result,
+            "tournament": tournament or "",
+            "neutral": bool(neutral),
+        })
         self.games += 1
 
 
@@ -285,8 +300,10 @@ def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tup
         sh.elo += delta
         sa.elo -= delta
 
-        sh.update(r.home_score, r.away_score, opp_elo=fa["elo"], exp_score=exp_home, date=r.date)
-        sa.update(r.away_score, r.home_score, opp_elo=fh["elo"], exp_score=1.0 - exp_home, date=r.date)
+        sh.update(r.home_score, r.away_score, opp_elo=fa["elo"], exp_score=exp_home,
+                  date=r.date, opponent=away, tournament=r.tournament, neutral=bool(neutral))
+        sa.update(r.away_score, r.home_score, opp_elo=fh["elo"], exp_score=1.0 - exp_home,
+                  date=r.date, opponent=home, tournament=r.tournament, neutral=bool(neutral))
 
 
     training_df = pd.DataFrame(rows)
@@ -296,6 +313,8 @@ def build_features(df: pd.DataFrame, min_date: str | None = "1990-01-01") -> tup
         "last_goals_against": list(st.goals_against),
         "last_date": st.last_date.isoformat() if st.last_date is not None else None,
         "window_start": st.dates[0].isoformat() if len(st.dates) > 0 else None,
+        # 5 jogos mais recentes, do mais novo ao mais antigo (formato do painel).
+        "recent": list(st.recent)[-5:][::-1],
     } for team, st in states.items()}
     return training_df, team_state
 

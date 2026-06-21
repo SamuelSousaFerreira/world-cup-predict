@@ -205,8 +205,10 @@ def compute_prediction(home: str, away: str, neutral: bool = False,
         "disagreement": result.disagreement,
         "state_home": state[home],
         "state_away": state[away],
-        "recent_home": recent_matches(home, 5),
-        "recent_away": recent_matches(away, 5),
+        # Lê os últimos jogos do estado commitado (sempre fresco via retreino diário).
+        # Faz fallback ao download apenas se o estado for antigo e não tiver o campo.
+        "recent_home": state[home].get("recent") or recent_matches(home, 5),
+        "recent_away": state[away].get("recent") or recent_matches(away, 5),
     }
 
 
