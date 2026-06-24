@@ -36,7 +36,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-24T13:00:00Z-sankey"
+APP_BUILD = "2026-06-24T13:30:00Z-ko-plotly"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -183,52 +183,58 @@ _KO_PATHS = ["Ganha em 90 min", "Na prorrogação", "Nos pênaltis"]
 _KO_COLORS = ["#16a34a", "#d97706", "#dc2626"]
 
 
-def knockout_stage_bar(ko: dict) -> alt.Chart:
-    """Barra empilhada: onde o confronto é decidido (90 / prorrogação / pênaltis)."""
+def knockout_stage_bar(ko: dict) -> go.Figure:
+    """Barra 100% empilhada: onde o confronto é decidido (90 / prorrogação / pênaltis)."""
     vals = [ko["decided_90"], ko["decided_et"], ko["decided_pen"]]
-    df = pd.DataFrame({"Estágio": _KO_STAGES, "Probabilidade": vals,
-                       "y": ["Confronto"] * 3})
-    return (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            x=alt.X("Probabilidade:Q", stack="normalize",
-                    axis=alt.Axis(format="%"), title=None),
-            y=alt.Y("y:N", title=None, axis=None),
-            color=alt.Color("Estágio:N", sort=_KO_STAGES,
-                            scale=alt.Scale(domain=_KO_STAGES, range=_KO_COLORS),
-                            legend=alt.Legend(orient="bottom", title=None)),
-            order=alt.Order("Estágio:N", sort="ascending"),
-            tooltip=[alt.Tooltip("Estágio:N"),
-                     alt.Tooltip("Probabilidade:Q", format=".1%")],
+    total = sum(vals) or 1.0
+    fig = go.Figure()
+    for label, v, color in zip(_KO_STAGES, vals, _KO_COLORS):
+        frac = v / total
+        fig.add_bar(
+            y=["Confronto"], x=[frac], name=label, orientation="h",
+            marker=dict(color=color, line=dict(width=0)),
+            text=[f"{frac:.0%}"] if frac >= 0.06 else [""],
+            textposition="inside", insidetextanchor="middle",
+            textfont=dict(color="white", size=13),
+            hovertemplate=f"{label}: %{{x:.1%}}<extra></extra>",
         )
-        .properties(height=80)
+    fig.update_layout(
+        barmode="stack", height=150,
+        margin=dict(l=8, r=8, t=8, b=8),
+        xaxis=dict(range=[0, 1], tickformat=".0%", showgrid=False, fixedrange=True),
+        yaxis=dict(visible=False, fixedrange=True),
+        legend=dict(orientation="h", yanchor="top", y=-0.15, x=0, title=None),
+        bargap=0.35,
     )
+    return fig
 
 
-def knockout_advance_bar(ko: dict, home: str, away: str) -> alt.Chart:
+def knockout_advance_bar(ko: dict, home: str, away: str) -> go.Figure:
     """Barras empilhadas por seleção: como cada uma se classifica."""
-    rows = []
-    for team, bd in ((home, ko["home_breakdown"]), (away, ko["away_breakdown"])):
-        for path, v in zip(_KO_PATHS, bd):
-            rows.append({"Seleção": team, "Caminho": path, "Probabilidade": float(v)})
-    df = pd.DataFrame(rows)
-    return (
-        alt.Chart(df)
-        .mark_bar()
-        .encode(
-            x=alt.X("Probabilidade:Q", axis=alt.Axis(format="%"),
-                    title="Probabilidade de classificar"),
-            y=alt.Y("Seleção:N", title=None, sort=[home, away]),
-            color=alt.Color("Caminho:N", sort=_KO_PATHS,
-                            scale=alt.Scale(domain=_KO_PATHS, range=_KO_COLORS),
-                            legend=alt.Legend(orient="bottom", title=None)),
-            order=alt.Order("Caminho:N", sort="ascending"),
-            tooltip=[alt.Tooltip("Seleção:N"), alt.Tooltip("Caminho:N"),
-                     alt.Tooltip("Probabilidade:Q", format=".1%")],
+    # Plotly desenha de baixo p/ cima: colocar o mandante no topo.
+    teams = [away, home]
+    breakdowns = {home: ko["home_breakdown"], away: ko["away_breakdown"]}
+    fig = go.Figure()
+    for j, (label, color) in enumerate(zip(_KO_PATHS, _KO_COLORS)):
+        xs = [float(breakdowns[t][j]) for t in teams]
+        fig.add_bar(
+            y=teams, x=xs, name=label, orientation="h",
+            marker=dict(color=color, line=dict(width=0)),
+            text=[f"{x:.0%}" if x >= 0.06 else "" for x in xs],
+            textposition="inside", insidetextanchor="middle",
+            textfont=dict(color="white", size=12),
+            hovertemplate="%{y} — " + label + ": %{x:.1%}<extra></extra>",
         )
-        .properties(height=130)
+    fig.update_layout(
+        barmode="stack", height=170,
+        margin=dict(l=8, r=8, t=8, b=8),
+        xaxis=dict(tickformat=".0%", title="Probabilidade de classificar",
+                   showgrid=True, gridcolor="#eef2f7", fixedrange=True, range=[0, 1]),
+        yaxis=dict(title=None, fixedrange=True, tickfont=dict(size=13)),
+        legend=dict(orientation="h", yanchor="top", y=-0.25, x=0, title=None),
+        bargap=0.4,
     )
+    return fig
 
 
 def _stage_name(remaining: int) -> str:
@@ -570,10 +576,12 @@ with tab_jogo:
             kc1, kc2 = st.columns(2)
             with kc1:
                 st.markdown("**Onde o confronto é decidido**")
-                st.altair_chart(knockout_stage_bar(ko), width="stretch")
+                st.plotly_chart(knockout_stage_bar(ko), width="stretch",
+                                config={"displayModeBar": False})
             with kc2:
                 st.markdown("**Como cada seleção se classifica**")
-                st.altair_chart(knockout_advance_bar(ko, h, a), width="stretch")
+                st.plotly_chart(knockout_advance_bar(ko, h, a), width="stretch",
+                                config={"displayModeBar": False})
             st.caption(
                 f"Pênaltis: quase moeda com leve viés por Elo — "
                 f"{h} {ko['home_pen_win']*100:.0f}% × {ko['away_pen_win']*100:.0f}% {a}. "
