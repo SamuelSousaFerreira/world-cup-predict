@@ -36,7 +36,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-24T13:30:00Z-ko-plotly"
+APP_BUILD = "2026-06-24T14:00:00Z-ko-legend"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -199,11 +199,13 @@ def knockout_stage_bar(ko: dict) -> go.Figure:
             hovertemplate=f"{label}: %{{x:.1%}}<extra></extra>",
         )
     fig.update_layout(
-        barmode="stack", height=150,
-        margin=dict(l=8, r=8, t=8, b=8),
-        xaxis=dict(range=[0, 1], tickformat=".0%", showgrid=False, fixedrange=True),
+        barmode="stack", height=140,
+        margin=dict(l=8, r=8, t=8, b=44),
+        xaxis=dict(range=[0, 1], visible=False, fixedrange=True),
         yaxis=dict(visible=False, fixedrange=True),
-        legend=dict(orientation="h", yanchor="top", y=-0.15, x=0, title=None),
+        legend=dict(orientation="h", traceorder="normal", xanchor="center",
+                    x=0.5, yanchor="top", y=-0.05, title=None,
+                    font=dict(size=12)),
         bargap=0.35,
     )
     return fig
@@ -226,12 +228,14 @@ def knockout_advance_bar(ko: dict, home: str, away: str) -> go.Figure:
             hovertemplate="%{y} — " + label + ": %{x:.1%}<extra></extra>",
         )
     fig.update_layout(
-        barmode="stack", height=170,
-        margin=dict(l=8, r=8, t=8, b=8),
-        xaxis=dict(tickformat=".0%", title="Probabilidade de classificar",
-                   showgrid=True, gridcolor="#eef2f7", fixedrange=True, range=[0, 1]),
+        barmode="stack", height=185,
+        margin=dict(l=8, r=8, t=8, b=52),
+        xaxis=dict(tickformat=".0%", title=None, showgrid=True,
+                   gridcolor="#eef2f7", fixedrange=True, range=[0, 1]),
         yaxis=dict(title=None, fixedrange=True, tickfont=dict(size=13)),
-        legend=dict(orientation="h", yanchor="top", y=-0.25, x=0, title=None),
+        legend=dict(orientation="h", traceorder="normal", xanchor="center",
+                    x=0.5, yanchor="top", y=-0.18, title=None,
+                    font=dict(size=12)),
         bargap=0.4,
     )
     return fig
