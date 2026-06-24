@@ -154,6 +154,44 @@ def run(teams: list[str], n_sims: int, seed: int = 42) -> list[tuple[str, float]
     return out
 
 
+def run_with_reach(teams: list[str], n_sims: int, seed: int = 42
+                   ) -> tuple[list[tuple[str, float]], dict[str, list[float]], int]:
+    """Como run(), mas também devolve a probabilidade de cada seleção alcançar
+    cada fase (para o diagrama de Sankey).
+
+    Retorna ``(titulo, reach, n_stages)`` onde ``reach[time]`` é uma lista de
+    tamanho ``n_stages`` com P(alcançar a fase s): a fase 0 é a rodada inicial
+    (sempre 1.0) e a última é o título. A soma de ``reach[*][s]`` é o número de
+    seleções vivas naquela fase (n, n/2, ..., 1).
+    """
+    state = load_team_state()
+    missing = [t for t in teams if t not in state]
+    if missing:
+        raise SystemExit(f"Seleções não encontradas (use nomes em inglês): {missing}")
+    predictor = MatchPredictor(state)
+    rng = np.random.default_rng(seed)
+    n_stages = len(teams).bit_length()              # log2(n) + 1
+    counts = {t: np.zeros(n_stages) for t in teams}
+    for _ in range(n_sims):
+        alive = list(teams)
+        stage = 0
+        for t in alive:
+            counts[t][stage] += 1
+        while len(alive) > 1:
+            nxt = []
+            for i in range(0, len(alive), 2):
+                a, b = alive[i], alive[i + 1]
+                p = predictor.knockout_winprob(a, b)
+                nxt.append(a if rng.random() < p else b)
+            alive = nxt
+            stage += 1
+            for t in alive:
+                counts[t][stage] += 1
+    reach = {t: (counts[t] / n_sims).tolist() for t in teams}
+    title = sorted(((t, reach[t][-1]) for t in teams), key=lambda x: -x[1])
+    return title, reach, n_stages
+
+
 def default_bracket(size: int = 16) -> list[str]:
     """Top-N seleções por Elo, semeadas (1 vs N, 2 vs N-1, ...)."""
     state = load_team_state()

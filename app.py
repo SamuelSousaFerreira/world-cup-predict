@@ -17,6 +17,7 @@ from pathlib import Path
 import altair as alt
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 SRC = Path(__file__).resolve().parent / "src"
@@ -27,7 +28,7 @@ from knockout import knockout_probabilities  # noqa: E402
 from predict import compute_prediction, load_models, load_weights  # noqa: E402
 from squad_data import load_squad_table  # noqa: E402
 from simulate_tournament import (MatchPredictor, default_bracket,  # noqa: E402
-                                 run as run_tournament)
+                                 run as run_tournament, run_with_reach)
 from team_assets import (DRAW_COLOR, flag_img_tag, flag_url,  # noqa: E402
                          lighten, pair_colors, team_color)
 
@@ -35,7 +36,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-24T10:14:14Z-knockout"
+APP_BUILD = "2026-06-24T13:00:00Z-sankey"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -228,6 +229,70 @@ def knockout_advance_bar(ko: dict, home: str, away: str) -> alt.Chart:
         )
         .properties(height=130)
     )
+
+
+def _stage_name(remaining: int) -> str:
+    """Nome da fase a partir de quantas seleções seguem vivas."""
+    return {1: "Campeão", 2: "Final", 4: "Semifinal", 8: "Quartas",
+            16: "Oitavas", 32: "Fase de 32", 64: "Fase de 64"}.get(
+        remaining, f"{remaining} times")
+
+
+def _hex_to_rgba(hexc: str, alpha: float) -> str:
+    hexc = hexc.lstrip("#")
+    r, g, b = (int(hexc[i:i + 2], 16) for i in (0, 2, 4))
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+def tournament_sankey(teams: list[str], reach: dict[str, list[float]],
+                      n_stages: int, threshold: float = 0.01) -> go.Figure:
+    """Fluxo das seleções pelas fases do mata-mata.
+
+    A largura de cada faixa é a probabilidade (Monte Carlo) de a seleção alcançar
+    aquela fase; as faixas afunilam a cada rodada. Fluxos abaixo de ``threshold``
+    são omitidos para reduzir poluição visual nas fases finais.
+    """
+    n = len(teams)
+    labels, colors, node_index = [], [], {}
+    for s in range(n_stages):
+        for t in teams:
+            if reach[t][s] >= threshold:
+                node_index[(t, s)] = len(labels)
+                labels.append(t)
+                colors.append(_hex_to_rgba(team_color(t), 0.95))
+
+    src, dst, val, link_colors, link_labels = [], [], [], [], []
+    for s in range(n_stages - 1):
+        remaining_next = n >> (s + 1)
+        for t in teams:
+            flow = reach[t][s + 1]
+            if flow >= threshold and (t, s) in node_index and (t, s + 1) in node_index:
+                src.append(node_index[(t, s)])
+                dst.append(node_index[(t, s + 1)])
+                val.append(flow)
+                link_colors.append(_hex_to_rgba(team_color(t), 0.45))
+                link_labels.append(f"{t} → {_stage_name(remaining_next)}: {flow:.1%}")
+
+    fig = go.Figure(go.Sankey(
+        arrangement="snap",
+        node=dict(label=labels, color=colors, pad=12, thickness=16,
+                  line=dict(width=0), hovertemplate="%{label}<extra></extra>"),
+        link=dict(source=src, target=dst, value=val, color=link_colors,
+                  customdata=link_labels, hovertemplate="%{customdata}<extra></extra>"),
+    ))
+    annotations = [
+        dict(x=(s / (n_stages - 1) if n_stages > 1 else 0.5), y=1.08,
+             xref="paper", yref="paper", text=f"<b>{_stage_name(n >> s)}</b>",
+             showarrow=False, font=dict(size=13, color="#334155"), xanchor="center")
+        for s in range(n_stages)
+    ]
+    fig.update_layout(
+        annotations=annotations,
+        margin=dict(l=60, r=60, t=42, b=10),
+        height=max(420, n * 26),
+        font=dict(size=12),
+    )
+    return fig
 
 
 # ------------------------------ Startup guard ------------------------------- #
@@ -609,8 +674,9 @@ with tab_torneio:
             st.error(f"O número de seleções deve ser potência de 2 (2, 4, 8, 16…). Você tem {n}.")
         else:
             with st.spinner(f"Rodando {n_sims:,} simulações..."):
-                out = run_tournament(bracket, n_sims)
+                out, reach, n_stages = run_with_reach(bracket, n_sims)
             st.session_state["tourney"] = out
+            st.session_state["tourney_reach"] = (bracket, reach, n_stages)
 
     out = st.session_state.get("tourney")
     if out:
@@ -658,4 +724,22 @@ with tab_torneio:
             f"{flag_img_tag(champ, 24)}<b>{champ}</b> ({p*100:.1f}%)</div>",
             unsafe_allow_html=True,
         )
+
+        reach_data = st.session_state.get("tourney_reach")
+        if reach_data:
+            sk_teams, reach, n_stages = reach_data
+            st.subheader("Caminho até o título (Sankey)")
+            st.caption(
+                "A largura de cada faixa é a probabilidade de a seleção alcançar "
+                "aquela fase; as faixas afunilam a cada rodada."
+            )
+            thr = st.slider(
+                "Esconder fluxos abaixo de", 0.0, 0.10, 0.01, 0.005,
+                format="%.1f%%", help="Reduz a poluição visual nas fases finais.",
+                key="sankey_thr",
+            )
+            st.plotly_chart(
+                tournament_sankey(sk_teams, reach, n_stages, thr),
+                width="stretch",
+            )
 
