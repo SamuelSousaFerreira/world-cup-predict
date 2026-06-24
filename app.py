@@ -23,6 +23,7 @@ SRC = Path(__file__).resolve().parent / "src"
 sys.path.insert(0, str(SRC))
 
 from feature_engineering import load_team_state  # noqa: E402
+from knockout import knockout_probabilities  # noqa: E402
 from predict import compute_prediction, load_models, load_weights  # noqa: E402
 from squad_data import load_squad_table  # noqa: E402
 from simulate_tournament import (MatchPredictor, default_bracket,  # noqa: E402
@@ -34,7 +35,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-06-24T10:14:14Z"
+APP_BUILD = "2026-06-24T10:14:14Z-knockout"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
@@ -175,6 +176,60 @@ def outcome_bar(ens: np.ndarray, home: str, away: str,
     return (bars + text).properties(height=150)
 
 
+# Paleta dos estágios do mata-mata (verde=cedo, âmbar=prorrog., vermelho=pênaltis)
+_KO_STAGES = ["Decidido em 90 min", "Na prorrogação", "Nos pênaltis"]
+_KO_PATHS = ["Ganha em 90 min", "Na prorrogação", "Nos pênaltis"]
+_KO_COLORS = ["#16a34a", "#d97706", "#dc2626"]
+
+
+def knockout_stage_bar(ko: dict) -> alt.Chart:
+    """Barra empilhada: onde o confronto é decidido (90 / prorrogação / pênaltis)."""
+    vals = [ko["decided_90"], ko["decided_et"], ko["decided_pen"]]
+    df = pd.DataFrame({"Estágio": _KO_STAGES, "Probabilidade": vals,
+                       "y": ["Confronto"] * 3})
+    return (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x=alt.X("Probabilidade:Q", stack="normalize",
+                    axis=alt.Axis(format="%"), title=None),
+            y=alt.Y("y:N", title=None, axis=None),
+            color=alt.Color("Estágio:N", sort=_KO_STAGES,
+                            scale=alt.Scale(domain=_KO_STAGES, range=_KO_COLORS),
+                            legend=alt.Legend(orient="bottom", title=None)),
+            order=alt.Order("Estágio:N", sort="ascending"),
+            tooltip=[alt.Tooltip("Estágio:N"),
+                     alt.Tooltip("Probabilidade:Q", format=".1%")],
+        )
+        .properties(height=80)
+    )
+
+
+def knockout_advance_bar(ko: dict, home: str, away: str) -> alt.Chart:
+    """Barras empilhadas por seleção: como cada uma se classifica."""
+    rows = []
+    for team, bd in ((home, ko["home_breakdown"]), (away, ko["away_breakdown"])):
+        for path, v in zip(_KO_PATHS, bd):
+            rows.append({"Seleção": team, "Caminho": path, "Probabilidade": float(v)})
+    df = pd.DataFrame(rows)
+    return (
+        alt.Chart(df)
+        .mark_bar()
+        .encode(
+            x=alt.X("Probabilidade:Q", axis=alt.Axis(format="%"),
+                    title="Probabilidade de classificar"),
+            y=alt.Y("Seleção:N", title=None, sort=[home, away]),
+            color=alt.Color("Caminho:N", sort=_KO_PATHS,
+                            scale=alt.Scale(domain=_KO_PATHS, range=_KO_COLORS),
+                            legend=alt.Legend(orient="bottom", title=None)),
+            order=alt.Order("Caminho:N", sort="ascending"),
+            tooltip=[alt.Tooltip("Seleção:N"), alt.Tooltip("Caminho:N"),
+                     alt.Tooltip("Probabilidade:Q", format=".1%")],
+        )
+        .properties(height=130)
+    )
+
+
 # ------------------------------ Startup guard ------------------------------- #
 @st.cache_resource(show_spinner=False)
 def _check_models_exist() -> bool:
@@ -249,6 +304,9 @@ with tab_jogo:
                             index=away_opts.index("Argentina") if "Argentina" in away_opts else 0)
     with c3:
         neutral = st.checkbox("Campo neutro", value=False)
+        knockout_on = st.checkbox(
+            "⚔️ Mata-mata", value=False,
+            help="Mostra prorrogação, pênaltis e a chance de cada seleção se classificar.")
         importance = st.slider("Importância", 0.0, 1.0, 1.0, 0.05,
                                help="1.0 = Copa do Mundo; 0.85 = amistoso")
 
@@ -424,6 +482,38 @@ with tab_jogo:
         with right:
             st.markdown("**Probabilidade do ensemble**")
             st.altair_chart(outcome_bar(ens, h, a, hc, ac), width="stretch")
+
+        if knockout_on:
+            elo_diff = res["state_home"]["elo"] - res["state_away"]["elo"]
+            ko = knockout_probabilities(ens, eg_h, eg_a, elo_diff)
+            st.divider()
+            st.subheader(
+                "⚔️ Cenário de eliminatória",
+                help="Se este jogo fosse mata-mata (sem mando): empate na "
+                     "regulamentar leva à prorrogação (Poisson com gols esperados "
+                     "proporcionais a 30 min) e, persistindo, aos pênaltis (leve "
+                     "viés por Elo calibrado em 677 disputas reais; Elo igual = 50%).")
+            a1, a2, a3, a4 = st.columns(4)
+            a1.metric(f"{h} classifica", f"{ko['home_advance']*100:.1f}%",
+                      f"{(ko['home_advance']-ens[0])*100:+.1f} pp vs vencer em 90",
+                      delta_color="off")
+            a2.metric(f"{a} classifica", f"{ko['away_advance']*100:.1f}%",
+                      f"{(ko['away_advance']-ens[2])*100:+.1f} pp vs vencer em 90",
+                      delta_color="off")
+            a3.metric("Vai à prorrogação", f"{ko['p_extra_time']*100:.1f}%")
+            a4.metric("Vai aos pênaltis", f"{ko['p_penalties']*100:.1f}%")
+            kc1, kc2 = st.columns(2)
+            with kc1:
+                st.markdown("**Onde o confronto é decidido**")
+                st.altair_chart(knockout_stage_bar(ko), width="stretch")
+            with kc2:
+                st.markdown("**Como cada seleção se classifica**")
+                st.altair_chart(knockout_advance_bar(ko, h, a), width="stretch")
+            st.caption(
+                f"Pênaltis: quase moeda com leve viés por Elo — "
+                f"{h} {ko['home_pen_win']*100:.0f}% × {ko['away_pen_win']*100:.0f}% {a}. "
+                f"P(prorrogação) usa o empate do ensemble; classificação = vencer em 90 "
+                f"+ empate×(vencer na prorrogação) + empate×empate-na-prorrogação×(vencer nos pênaltis).")
 
         st.divider()
         st.subheader("Probabilidades de gols", help="Derivadas do modelo Poisson com correção Dixon-Coles. Mostra a distribuição de gols de cada time, o mapa de calor dos placares exatos e os mercados clássicos (over/under e ambas marcam).")

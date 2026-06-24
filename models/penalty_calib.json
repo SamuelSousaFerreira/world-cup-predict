@@ -1,0 +1,5 @@
+{
+  "elo_coef": 0.0015688822815496835,
+  "n_matches": 677,
+  "note": "p_home_pen = sigmoid(elo_coef * elo_diff); sem intercepto (neutro=50%)"
+}
