@@ -435,20 +435,19 @@
     ]
   },
   "Canada": {
-    "elo": 1845.6211259162312,
-    "form": 0.5,
-    "attack": 1.5,
+    "elo": 1856.9557824258122,
+    "form": 0.5666666666666667,
+    "attack": 1.6,
     "defense": 0.6,
-    "style": 2.1,
-    "aggression": 0.9,
-    "ewma_form": 0.4690629241577594,
-    "adj_attack": 2.5308170795572833,
-    "adj_defense": 0.5674309029787918,
-    "sos": 2.8115957393179336,
-    "streak": -1,
+    "style": 2.2,
+    "aggression": 1.0,
+    "ewma_form": 0.5937428215775582,
+    "adj_attack": 2.308133858774587,
+    "adj_defense": 0.4503702061538997,
+    "sos": 2.471004467603361,
+    "streak": 1,
     "games": 10,
     "last_goals_for": [
-      0,
       0,
       2,
       2,
@@ -457,10 +456,10 @@
       1,
       1,
       6,
+      1,
       1
     ],
     "last_goals_against": [
-      0,
       0,
       0,
       2,
@@ -469,11 +468,21 @@
       1,
       1,
       0,
-      2
+      2,
+      0
     ],
-    "last_date": "2026-06-24T00:00:00",
-    "window_start": "2025-10-14T00:00:00",
+    "last_date": "2026-06-28T00:00:00",
+    "window_start": "2025-11-13T00:00:00",
     "recent": [
+      {
+        "date": "28/06/2026",
+        "opponent": "South Africa",
+        "gf": 1,
+        "ga": 0,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "24/06/2026",
         "opponent": "Switzerland",
@@ -507,15 +516,6 @@
         "gf": 1,
         "ga": 1,
         "result": "D",
-        "tournament": "Friendly",
-        "neutral": false
-      },
-      {
-        "date": "01/06/2026",
-        "opponent": "Uzbekistan",
-        "gf": 2,
-        "ga": 0,
-        "result": "W",
         "tournament": "Friendly",
         "neutral": false
       }
@@ -1740,20 +1740,19 @@
     ]
   },
   "South Africa": {
-    "elo": 1684.4416112822457,
+    "elo": 1673.1069547726647,
     "form": 0.4,
     "attack": 0.9,
     "defense": 1.1,
     "style": 2.0,
     "aggression": -0.20000000000000007,
-    "ewma_form": 0.4895727325280752,
-    "adj_attack": 1.1300856184689558,
-    "adj_defense": 0.5993182138088932,
-    "sos": 2.1667013305189653,
-    "streak": 1,
+    "ewma_form": 0.3885741353150063,
+    "adj_attack": 0.8969495497858767,
+    "adj_defense": 0.6043470012413479,
+    "sos": 2.2933714084504824,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      0,
       3,
       1,
       1,
@@ -1762,23 +1761,33 @@
       1,
       0,
       1,
-      1
-    ],
-    "last_goals_against": [
-      1,
-      2,
-      2,
-      1,
-      2,
-      0,
-      0,
-      2,
       1,
       0
     ],
-    "last_date": "2026-06-24T00:00:00",
-    "window_start": "2025-12-26T00:00:00",
+    "last_goals_against": [
+      2,
+      2,
+      1,
+      2,
+      0,
+      0,
+      2,
+      1,
+      0,
+      1
+    ],
+    "last_date": "2026-06-28T00:00:00",
+    "window_start": "2025-12-29T00:00:00",
     "recent": [
+      {
+        "date": "28/06/2026",
+        "opponent": "Canada",
+        "gf": 0,
+        "ga": 1,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "24/06/2026",
         "opponent": "South Korea",
@@ -1814,15 +1823,6 @@
         "result": "W",
         "tournament": "Friendly",
         "neutral": true
-      },
-      {
-        "date": "29/05/2026",
-        "opponent": "Nicaragua",
-        "gf": 0,
-        "ga": 0,
-        "result": "D",
-        "tournament": "Friendly",
-        "neutral": false
       }
     ]
   },
