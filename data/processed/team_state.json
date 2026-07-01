@@ -1044,20 +1044,19 @@
     ]
   },
   "France": {
-    "elo": 2123.915607938906,
-    "form": 0.8333333333333334,
-    "attack": 2.8,
-    "defense": 1.0,
-    "style": 3.8,
-    "aggression": 1.7999999999999998,
-    "ewma_form": 0.8900277472950645,
-    "adj_attack": 4.517673052610623,
-    "adj_defense": 0.6204353593305985,
-    "sos": 2.8160686035398474,
-    "streak": 4,
+    "elo": 2132.4505594436123,
+    "form": 0.9,
+    "attack": 2.9,
+    "defense": 0.8,
+    "style": 3.7,
+    "aggression": 2.0999999999999996,
+    "ewma_form": 0.9278628231224408,
+    "adj_attack": 4.542573178460315,
+    "adj_defense": 0.45263548149460764,
+    "sos": 3.012009890023844,
+    "streak": 5,
     "games": 10,
     "last_goals_for": [
-      2,
       4,
       3,
       2,
@@ -1066,10 +1065,10 @@
       3,
       3,
       3,
-      4
+      4,
+      3
     ],
     "last_goals_against": [
-      2,
       0,
       1,
       1,
@@ -1078,11 +1077,21 @@
       1,
       1,
       0,
-      1
+      1,
+      0
     ],
-    "last_date": "2026-06-26T00:00:00",
-    "window_start": "2025-10-13T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2025-11-13T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "Sweden",
+        "gf": 3,
+        "ga": 0,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "26/06/2026",
         "opponent": "Norway",
@@ -1116,15 +1125,6 @@
         "gf": 3,
         "ga": 1,
         "result": "W",
-        "tournament": "Friendly",
-        "neutral": false
-      },
-      {
-        "date": "04/06/2026",
-        "opponent": "Ivory Coast",
-        "gf": 1,
-        "ga": 2,
-        "result": "L",
         "tournament": "Friendly",
         "neutral": false
       }
@@ -1914,20 +1914,19 @@
     ]
   },
   "Sweden": {
-    "elo": 1780.9447396190012,
+    "elo": 1772.409788114295,
     "form": 0.4,
     "attack": 1.8,
-    "defense": 2.1,
-    "style": 3.9000000000000004,
-    "aggression": -0.30000000000000004,
-    "ewma_form": 0.40332533426286193,
-    "adj_attack": 2.907985969034603,
-    "adj_defense": 1.363590528135458,
-    "sos": 3.3331533168525493,
-    "streak": 0,
+    "defense": 2.3,
+    "style": 4.1,
+    "aggression": -0.4999999999999998,
+    "ewma_form": 0.32011952994714643,
+    "adj_attack": 2.3080699931771465,
+    "adj_defense": 1.4685861231930277,
+    "sos": 3.7933782334946455,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      0,
       1,
       1,
       3,
@@ -1936,10 +1935,10 @@
       2,
       5,
       1,
-      1
+      1,
+      0
     ],
     "last_goals_against": [
-      1,
       4,
       1,
       1,
@@ -1948,11 +1947,21 @@
       2,
       1,
       5,
-      1
+      1,
+      3
     ],
-    "last_date": "2026-06-25T00:00:00",
-    "window_start": "2025-10-13T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2025-11-15T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "France",
+        "gf": 0,
+        "ga": 3,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "25/06/2026",
         "opponent": "Japan",
@@ -1988,33 +1997,23 @@
         "result": "D",
         "tournament": "Friendly",
         "neutral": false
-      },
-      {
-        "date": "01/06/2026",
-        "opponent": "Norway",
-        "gf": 1,
-        "ga": 3,
-        "result": "L",
-        "tournament": "Friendly",
-        "neutral": false
       }
     ]
   },
   "Norway": {
-    "elo": 1936.106772537873,
-    "form": 0.6,
-    "attack": 2.2,
+    "elo": 1950.128321648753,
+    "form": 0.6666666666666666,
+    "attack": 2.3,
     "defense": 1.4,
-    "style": 3.6,
-    "aggression": 0.8000000000000003,
-    "ewma_form": 0.5702064472101157,
-    "adj_attack": 3.212704527465677,
-    "adj_defense": 1.1577004354417448,
-    "sos": 3.4093665419470334,
-    "streak": -1,
+    "style": 3.6999999999999997,
+    "aggression": 0.8999999999999999,
+    "ewma_form": 0.6740204890240984,
+    "adj_attack": 3.2270962158005223,
+    "adj_defense": 1.050659773737639,
+    "sos": 3.4929147748841523,
+    "streak": 1,
     "games": 10,
     "last_goals_for": [
-      1,
       4,
       4,
       1,
@@ -2023,23 +2022,33 @@
       1,
       4,
       3,
-      1
+      1,
+      2
     ],
     "last_goals_against": [
       1,
       1,
-      1,
       2,
       0,
       1,
       1,
       1,
       2,
-      4
+      4,
+      1
     ],
-    "last_date": "2026-06-26T00:00:00",
-    "window_start": "2025-10-14T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2025-11-13T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "Ivory Coast",
+        "gf": 2,
+        "ga": 1,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "26/06/2026",
         "opponent": "France",
@@ -2075,15 +2084,6 @@
         "result": "D",
         "tournament": "Friendly",
         "neutral": true
-      },
-      {
-        "date": "01/06/2026",
-        "opponent": "Sweden",
-        "gf": 3,
-        "ga": 1,
-        "result": "W",
-        "tournament": "Friendly",
-        "neutral": false
       }
     ]
   },
@@ -4829,20 +4829,19 @@
     ]
   },
   "Mexico": {
-    "elo": 1959.2167298314118,
+    "elo": 1983.3308845641027,
     "form": 0.8666666666666667,
-    "attack": 2.0,
+    "attack": 2.1,
     "defense": 0.2,
-    "style": 2.2,
-    "aggression": 1.8,
-    "ewma_form": 0.9315340739701733,
-    "adj_attack": 3.1255720188804372,
-    "adj_defense": 0.11098451701760663,
-    "sos": 2.8310286605444777,
-    "streak": 6,
+    "style": 2.3000000000000003,
+    "aggression": 1.9000000000000001,
+    "ewma_form": 0.9456585584981381,
+    "adj_attack": 3.2286587083955895,
+    "adj_defense": 0.08808846953296565,
+    "sos": 3.0733509559255867,
+    "streak": 7,
     "games": 10,
     "last_goals_for": [
-      1,
       4,
       0,
       1,
@@ -4851,23 +4850,33 @@
       5,
       2,
       1,
-      3
+      3,
+      2
     ],
     "last_goals_against": [
       0,
       0,
-      0,
       1,
       0,
       0,
       1,
+      0,
       0,
       0,
       0
     ],
-    "last_date": "2026-06-24T00:00:00",
-    "window_start": "2026-01-25T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2026-02-25T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "Ecuador",
+        "gf": 2,
+        "ga": 0,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": false
+      },
       {
         "date": "24/06/2026",
         "opponent": "Czech Republic",
@@ -4903,15 +4912,6 @@
         "result": "W",
         "tournament": "Friendly",
         "neutral": false
-      },
-      {
-        "date": "30/05/2026",
-        "opponent": "Australia",
-        "gf": 1,
-        "ga": 0,
-        "result": "W",
-        "tournament": "Friendly",
-        "neutral": true
       }
     ]
   },
@@ -7555,20 +7555,19 @@
     ]
   },
   "Ecuador": {
-    "elo": 1955.1562750728194,
-    "form": 0.5666666666666667,
-    "attack": 1.2,
-    "defense": 0.6,
-    "style": 1.7999999999999998,
-    "aggression": 0.6,
-    "ewma_form": 0.6051502906325605,
-    "adj_attack": 1.8246811819787745,
-    "adj_defense": 0.3943733219136855,
-    "sos": 3.133442878538765,
-    "streak": 1,
+    "elo": 1931.0421203401286,
+    "form": 0.5333333333333333,
+    "attack": 1.1,
+    "defense": 0.7,
+    "style": 1.8,
+    "aggression": 0.40000000000000013,
+    "ewma_form": 0.4727341750054919,
+    "adj_attack": 1.4105896460633456,
+    "adj_defense": 0.568742405666215,
+    "sos": 3.1981752930133664,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      1,
       0,
       2,
       1,
@@ -7577,10 +7576,10 @@
       3,
       0,
       0,
-      2
+      2,
+      0
     ],
     "last_goals_against": [
-      1,
       0,
       0,
       1,
@@ -7589,11 +7588,21 @@
       0,
       1,
       0,
-      1
+      1,
+      2
     ],
-    "last_date": "2026-06-25T00:00:00",
-    "window_start": "2025-10-14T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2025-11-13T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "Mexico",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": false
+      },
       {
         "date": "25/06/2026",
         "opponent": "Germany",
@@ -7626,15 +7635,6 @@
         "opponent": "Guatemala",
         "gf": 3,
         "ga": 0,
-        "result": "W",
-        "tournament": "Friendly",
-        "neutral": true
-      },
-      {
-        "date": "30/05/2026",
-        "opponent": "Saudi Arabia",
-        "gf": 2,
-        "ga": 1,
         "result": "W",
         "tournament": "Friendly",
         "neutral": true
@@ -13524,20 +13524,19 @@
     ]
   },
   "Ivory Coast": {
-    "elo": 1828.9798714120573,
-    "form": 0.7333333333333333,
+    "elo": 1814.9583223011773,
+    "form": 0.7,
     "attack": 2.0,
-    "defense": 0.9,
-    "style": 2.9,
-    "aggression": 1.1,
-    "ewma_form": 0.7418852844363114,
-    "adj_attack": 2.5802934783125218,
-    "adj_defense": 0.4932513701845748,
-    "sos": 2.999480338201606,
-    "streak": 1,
+    "defense": 1.0,
+    "style": 3.0,
+    "aggression": 1.0,
+    "ewma_form": 0.5812608115079616,
+    "adj_attack": 2.4078724772411695,
+    "adj_defense": 0.6433963352327784,
+    "sos": 3.258078967257595,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      1,
       3,
       3,
       2,
@@ -13546,10 +13545,10 @@
       2,
       1,
       1,
-      2
+      2,
+      1
     ],
     "last_goals_against": [
-      1,
       2,
       0,
       3,
@@ -13558,11 +13557,21 @@
       1,
       0,
       2,
-      0
+      0,
+      2
     ],
-    "last_date": "2026-06-25T00:00:00",
-    "window_start": "2025-12-28T00:00:00",
+    "last_date": "2026-06-30T00:00:00",
+    "window_start": "2025-12-31T00:00:00",
     "recent": [
+      {
+        "date": "30/06/2026",
+        "opponent": "Norway",
+        "gf": 1,
+        "ga": 2,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "25/06/2026",
         "opponent": "Curaçao",
@@ -13598,15 +13607,6 @@
         "result": "W",
         "tournament": "Friendly",
         "neutral": false
-      },
-      {
-        "date": "31/03/2026",
-        "opponent": "Scotland",
-        "gf": 1,
-        "ga": 0,
-        "result": "W",
-        "tournament": "Friendly",
-        "neutral": true
       }
     ]
   },
@@ -23554,61 +23554,6 @@
       }
     ]
   },
-  "Găgăuzia": {
-    "elo": 1438.6575614200524,
-    "form": 0.1111111111111111,
-    "attack": 0.6666666666666666,
-    "defense": 3.0,
-    "style": 3.6666666666666665,
-    "aggression": -2.3333333333333335,
-    "ewma_form": 0.13753298267726682,
-    "adj_attack": 0.5619570058870177,
-    "adj_defense": 3.767376477988632,
-    "sos": -1.1832044601767142,
-    "streak": 0,
-    "games": 3,
-    "last_goals_for": [
-      0,
-      1,
-      1
-    ],
-    "last_goals_against": [
-      2,
-      6,
-      1
-    ],
-    "last_date": "2006-11-21T00:00:00",
-    "window_start": "2006-11-19T00:00:00",
-    "recent": [
-      {
-        "date": "21/11/2006",
-        "opponent": "Zanzibar",
-        "gf": 1,
-        "ga": 1,
-        "result": "D",
-        "tournament": "ELF Cup",
-        "neutral": true
-      },
-      {
-        "date": "20/11/2006",
-        "opponent": "Kyrgyzstan",
-        "gf": 1,
-        "ga": 6,
-        "result": "L",
-        "tournament": "ELF Cup",
-        "neutral": true
-      },
-      {
-        "date": "19/11/2006",
-        "opponent": "Greenland",
-        "gf": 0,
-        "ga": 2,
-        "result": "L",
-        "tournament": "ELF Cup",
-        "neutral": true
-      }
-    ]
-  },
   "Crimea": {
     "elo": 1500.2003710878432,
     "form": 0.6,
@@ -23683,6 +23628,61 @@
         "result": "L",
         "tournament": "ELF Cup",
         "neutral": false
+      }
+    ]
+  },
+  "Găgăuzia": {
+    "elo": 1438.6575614200524,
+    "form": 0.1111111111111111,
+    "attack": 0.6666666666666666,
+    "defense": 3.0,
+    "style": 3.6666666666666665,
+    "aggression": -2.3333333333333335,
+    "ewma_form": 0.13753298267726682,
+    "adj_attack": 0.5619570058870177,
+    "adj_defense": 3.767376477988632,
+    "sos": -1.1832044601767142,
+    "streak": 0,
+    "games": 3,
+    "last_goals_for": [
+      0,
+      1,
+      1
+    ],
+    "last_goals_against": [
+      2,
+      6,
+      1
+    ],
+    "last_date": "2006-11-21T00:00:00",
+    "window_start": "2006-11-19T00:00:00",
+    "recent": [
+      {
+        "date": "21/11/2006",
+        "opponent": "Zanzibar",
+        "gf": 1,
+        "ga": 1,
+        "result": "D",
+        "tournament": "ELF Cup",
+        "neutral": true
+      },
+      {
+        "date": "20/11/2006",
+        "opponent": "Kyrgyzstan",
+        "gf": 1,
+        "ga": 6,
+        "result": "L",
+        "tournament": "ELF Cup",
+        "neutral": true
+      },
+      {
+        "date": "19/11/2006",
+        "opponent": "Greenland",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "ELF Cup",
+        "neutral": true
       }
     ]
   },
