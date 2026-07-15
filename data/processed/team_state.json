@@ -1044,20 +1044,19 @@
     ]
   },
   "France": {
-    "elo": 2158.70523268377,
-    "form": 0.9,
-    "attack": 2.5,
-    "defense": 0.7,
-    "style": 3.2,
-    "aggression": 1.8,
-    "ewma_form": 0.9545564261859868,
-    "adj_attack": 3.7664081693547975,
-    "adj_defense": 0.2577726315687945,
-    "sos": 3.668994505228868,
-    "streak": 7,
+    "elo": 2131.3142045166155,
+    "form": 0.8,
+    "attack": 2.3,
+    "defense": 0.8,
+    "style": 3.0999999999999996,
+    "aggression": 1.4999999999999998,
+    "ewma_form": 0.7349101506383136,
+    "adj_attack": 2.9121460696038906,
+    "adj_defense": 0.4606652938126973,
+    "sos": 3.834744212321434,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      2,
       3,
       1,
       3,
@@ -1066,10 +1065,10 @@
       4,
       3,
       1,
-      2
+      2,
+      0
     ],
     "last_goals_against": [
-      1,
       1,
       2,
       1,
@@ -1078,11 +1077,21 @@
       1,
       0,
       0,
-      0
+      0,
+      2
     ],
-    "last_date": "2026-07-09T00:00:00",
-    "window_start": "2026-03-26T00:00:00",
+    "last_date": "2026-07-14T00:00:00",
+    "window_start": "2026-03-29T00:00:00",
     "recent": [
+      {
+        "date": "14/07/2026",
+        "opponent": "Spain",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "09/07/2026",
         "opponent": "Morocco",
@@ -1115,15 +1124,6 @@
         "opponent": "Norway",
         "gf": 4,
         "ga": 1,
-        "result": "W",
-        "tournament": "FIFA World Cup",
-        "neutral": true
-      },
-      {
-        "date": "22/06/2026",
-        "opponent": "Iraq",
-        "gf": 3,
-        "ga": 0,
         "result": "W",
         "tournament": "FIFA World Cup",
         "neutral": true
@@ -3480,20 +3480,19 @@
     ]
   },
   "Spain": {
-    "elo": 2188.9967411309153,
+    "elo": 2216.38776929807,
     "form": 0.8,
-    "attack": 1.8,
+    "attack": 1.7,
     "defense": 0.3,
-    "style": 2.1,
-    "aggression": 1.5,
-    "ewma_form": 0.897567107246432,
-    "adj_attack": 2.903801932562773,
-    "adj_defense": 0.2081598503322987,
-    "sos": 3.2105539808835055,
-    "streak": 5,
+    "style": 2.0,
+    "aggression": 1.4,
+    "ewma_form": 0.9186989591434203,
+    "adj_attack": 2.9798102626859553,
+    "adj_defense": 0.16521658269751696,
+    "sos": 3.557260997012436,
+    "streak": 6,
     "games": 10,
     "last_goals_for": [
-      3,
       0,
       1,
       3,
@@ -3502,11 +3501,11 @@
       1,
       3,
       1,
+      2,
       2
     ],
     "last_goals_against": [
       0,
-      0,
       1,
       1,
       0,
@@ -3514,11 +3513,21 @@
       0,
       0,
       0,
-      1
+      1,
+      0
     ],
-    "last_date": "2026-07-10T00:00:00",
-    "window_start": "2026-03-27T00:00:00",
+    "last_date": "2026-07-14T00:00:00",
+    "window_start": "2026-03-31T00:00:00",
     "recent": [
+      {
+        "date": "14/07/2026",
+        "opponent": "France",
+        "gf": 2,
+        "ga": 0,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "10/07/2026",
         "opponent": "Belgium",
@@ -3550,15 +3559,6 @@
         "date": "26/06/2026",
         "opponent": "Uruguay",
         "gf": 1,
-        "ga": 0,
-        "result": "W",
-        "tournament": "FIFA World Cup",
-        "neutral": true
-      },
-      {
-        "date": "21/06/2026",
-        "opponent": "Saudi Arabia",
-        "gf": 4,
         "ga": 0,
         "result": "W",
         "tournament": "FIFA World Cup",
