@@ -609,20 +609,19 @@
     ]
   },
   "Argentina": {
-    "elo": 2203.3919151138934,
-    "form": 1.0,
-    "attack": 2.9,
-    "defense": 0.7,
-    "style": 3.5999999999999996,
-    "aggression": 2.2,
-    "ewma_form": 1.0,
-    "adj_attack": 4.100102943184223,
-    "adj_defense": 0.6741309120236187,
-    "sos": 2.840098733805771,
-    "streak": 10,
+    "elo": 2184.1468227222795,
+    "form": 0.9,
+    "attack": 2.4,
+    "defense": 0.8,
+    "style": 3.2,
+    "aggression": 1.5999999999999999,
+    "ewma_form": 0.770978739077093,
+    "adj_attack": 3.1339897124212963,
+    "adj_defense": 0.6697764482334676,
+    "sos": 3.5214629480756594,
+    "streak": -1,
     "games": 10,
     "last_goals_for": [
-      5,
       2,
       3,
       3,
@@ -631,23 +630,33 @@
       3,
       3,
       3,
-      2
+      2,
+      0
     ],
     "last_goals_against": [
       0,
       0,
       0,
       0,
-      0,
       1,
       2,
       2,
+      1,
       1,
       1
     ],
-    "last_date": "2026-07-15T00:00:00",
-    "window_start": "2026-03-31T00:00:00",
+    "last_date": "2026-07-19T00:00:00",
+    "window_start": "2026-06-06T00:00:00",
     "recent": [
+      {
+        "date": "19/07/2026",
+        "opponent": "Spain",
+        "gf": 0,
+        "ga": 1,
+        "result": "L",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "15/07/2026",
         "opponent": "England",
@@ -680,15 +689,6 @@
         "opponent": "Cape Verde",
         "gf": 3,
         "ga": 2,
-        "result": "W",
-        "tournament": "FIFA World Cup",
-        "neutral": true
-      },
-      {
-        "date": "27/06/2026",
-        "opponent": "Jordan",
-        "gf": 3,
-        "ga": 1,
         "result": "W",
         "tournament": "FIFA World Cup",
         "neutral": true
@@ -3480,20 +3480,19 @@
     ]
   },
   "Spain": {
-    "elo": 2216.5122367305216,
-    "form": 0.8,
-    "attack": 1.7,
+    "elo": 2235.7573291221356,
+    "form": 0.8666666666666667,
+    "attack": 1.8,
     "defense": 0.3,
-    "style": 2.0,
-    "aggression": 1.4,
-    "ewma_form": 0.9186989591434203,
-    "adj_attack": 2.979929495884789,
-    "adj_defense": 0.16521341149590846,
-    "sos": 3.5580533113853607,
-    "streak": 6,
+    "style": 2.1,
+    "aggression": 1.5,
+    "ewma_form": 0.9506191790470822,
+    "adj_attack": 2.754507751848232,
+    "adj_defense": 0.13112997160393003,
+    "sos": 3.9937785831941732,
+    "streak": 7,
     "games": 10,
     "last_goals_for": [
-      0,
       1,
       3,
       0,
@@ -3502,10 +3501,10 @@
       3,
       1,
       2,
-      2
+      2,
+      1
     ],
     "last_goals_against": [
-      0,
       1,
       1,
       0,
@@ -3514,11 +3513,21 @@
       0,
       0,
       1,
+      0,
       0
     ],
-    "last_date": "2026-07-14T00:00:00",
-    "window_start": "2026-03-31T00:00:00",
+    "last_date": "2026-07-19T00:00:00",
+    "window_start": "2026-06-04T00:00:00",
     "recent": [
+      {
+        "date": "19/07/2026",
+        "opponent": "Argentina",
+        "gf": 1,
+        "ga": 0,
+        "result": "W",
+        "tournament": "FIFA World Cup",
+        "neutral": true
+      },
       {
         "date": "14/07/2026",
         "opponent": "France",
@@ -3550,15 +3559,6 @@
         "date": "02/07/2026",
         "opponent": "Austria",
         "gf": 3,
-        "ga": 0,
-        "result": "W",
-        "tournament": "FIFA World Cup",
-        "neutral": true
-      },
-      {
-        "date": "26/06/2026",
-        "opponent": "Uruguay",
-        "gf": 1,
         "ga": 0,
         "result": "W",
         "tournament": "FIFA World Cup",
@@ -23641,61 +23641,6 @@
       }
     ]
   },
-  "Găgăuzia": {
-    "elo": 1438.7822085877092,
-    "form": 0.1111111111111111,
-    "attack": 0.6666666666666666,
-    "defense": 3.0,
-    "style": 3.6666666666666665,
-    "aggression": -2.3333333333333335,
-    "ewma_form": 0.13753298267726682,
-    "adj_attack": 0.5635318079911317,
-    "adj_defense": 3.761367439878315,
-    "sos": -1.1735838282087387,
-    "streak": 0,
-    "games": 3,
-    "last_goals_for": [
-      0,
-      1,
-      1
-    ],
-    "last_goals_against": [
-      2,
-      6,
-      1
-    ],
-    "last_date": "2006-11-21T00:00:00",
-    "window_start": "2006-11-19T00:00:00",
-    "recent": [
-      {
-        "date": "21/11/2006",
-        "opponent": "Zanzibar",
-        "gf": 1,
-        "ga": 1,
-        "result": "D",
-        "tournament": "ELF Cup",
-        "neutral": true
-      },
-      {
-        "date": "20/11/2006",
-        "opponent": "Kyrgyzstan",
-        "gf": 1,
-        "ga": 6,
-        "result": "L",
-        "tournament": "ELF Cup",
-        "neutral": true
-      },
-      {
-        "date": "19/11/2006",
-        "opponent": "Greenland",
-        "gf": 0,
-        "ga": 2,
-        "result": "L",
-        "tournament": "ELF Cup",
-        "neutral": true
-      }
-    ]
-  },
   "Crimea": {
     "elo": 1502.8497993743504,
     "form": 0.6,
@@ -23770,6 +23715,61 @@
         "result": "L",
         "tournament": "ELF Cup",
         "neutral": false
+      }
+    ]
+  },
+  "Găgăuzia": {
+    "elo": 1438.7822085877092,
+    "form": 0.1111111111111111,
+    "attack": 0.6666666666666666,
+    "defense": 3.0,
+    "style": 3.6666666666666665,
+    "aggression": -2.3333333333333335,
+    "ewma_form": 0.13753298267726682,
+    "adj_attack": 0.5635318079911317,
+    "adj_defense": 3.761367439878315,
+    "sos": -1.1735838282087387,
+    "streak": 0,
+    "games": 3,
+    "last_goals_for": [
+      0,
+      1,
+      1
+    ],
+    "last_goals_against": [
+      2,
+      6,
+      1
+    ],
+    "last_date": "2006-11-21T00:00:00",
+    "window_start": "2006-11-19T00:00:00",
+    "recent": [
+      {
+        "date": "21/11/2006",
+        "opponent": "Zanzibar",
+        "gf": 1,
+        "ga": 1,
+        "result": "D",
+        "tournament": "ELF Cup",
+        "neutral": true
+      },
+      {
+        "date": "20/11/2006",
+        "opponent": "Kyrgyzstan",
+        "gf": 1,
+        "ga": 6,
+        "result": "L",
+        "tournament": "ELF Cup",
+        "neutral": true
+      },
+      {
+        "date": "19/11/2006",
+        "opponent": "Greenland",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "ELF Cup",
+        "neutral": true
       }
     ]
   },
@@ -26128,93 +26128,6 @@
       }
     ]
   },
-  "Felvidék": {
-    "elo": 1503.1152538615931,
-    "form": 0.4666666666666667,
-    "attack": 1.1,
-    "defense": 1.6,
-    "style": 2.7,
-    "aggression": -0.5,
-    "ewma_form": 0.506177527330512,
-    "adj_attack": 0.9454921643965738,
-    "adj_defense": 0.9566775026730406,
-    "sos": 0.39363977253304483,
-    "streak": 1,
-    "games": 10,
-    "last_goals_for": [
-      3,
-      1,
-      0,
-      1,
-      1,
-      2,
-      1,
-      0,
-      0,
-      2
-    ],
-    "last_goals_against": [
-      1,
-      4,
-      5,
-      1,
-      1,
-      1,
-      0,
-      1,
-      2,
-      0
-    ],
-    "last_date": "2017-06-09T00:00:00",
-    "window_start": "2015-06-18T00:00:00",
-    "recent": [
-      {
-        "date": "09/06/2017",
-        "opponent": "South Ossetia",
-        "gf": 2,
-        "ga": 0,
-        "result": "W",
-        "tournament": "CONIFA European Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "07/06/2017",
-        "opponent": "Padania",
-        "gf": 0,
-        "ga": 2,
-        "result": "L",
-        "tournament": "CONIFA European Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "06/06/2017",
-        "opponent": "Ellan Vannin",
-        "gf": 0,
-        "ga": 1,
-        "result": "L",
-        "tournament": "CONIFA European Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "05/06/2017",
-        "opponent": "Székely Land",
-        "gf": 1,
-        "ga": 0,
-        "result": "W",
-        "tournament": "CONIFA European Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "03/08/2016",
-        "opponent": "Délvidék",
-        "gf": 2,
-        "ga": 1,
-        "result": "W",
-        "tournament": "Hungary Heritage Cup",
-        "neutral": true
-      }
-    ]
-  },
   "Panjab": {
     "elo": 1573.3650812113985,
     "form": 0.4666666666666667,
@@ -26298,6 +26211,93 @@
         "ga": 2,
         "result": "L",
         "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      }
+    ]
+  },
+  "Felvidék": {
+    "elo": 1503.1152538615931,
+    "form": 0.4666666666666667,
+    "attack": 1.1,
+    "defense": 1.6,
+    "style": 2.7,
+    "aggression": -0.5,
+    "ewma_form": 0.506177527330512,
+    "adj_attack": 0.9454921643965738,
+    "adj_defense": 0.9566775026730406,
+    "sos": 0.39363977253304483,
+    "streak": 1,
+    "games": 10,
+    "last_goals_for": [
+      3,
+      1,
+      0,
+      1,
+      1,
+      2,
+      1,
+      0,
+      0,
+      2
+    ],
+    "last_goals_against": [
+      1,
+      4,
+      5,
+      1,
+      1,
+      1,
+      0,
+      1,
+      2,
+      0
+    ],
+    "last_date": "2017-06-09T00:00:00",
+    "window_start": "2015-06-18T00:00:00",
+    "recent": [
+      {
+        "date": "09/06/2017",
+        "opponent": "South Ossetia",
+        "gf": 2,
+        "ga": 0,
+        "result": "W",
+        "tournament": "CONIFA European Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "07/06/2017",
+        "opponent": "Padania",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "CONIFA European Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "06/06/2017",
+        "opponent": "Ellan Vannin",
+        "gf": 0,
+        "ga": 1,
+        "result": "L",
+        "tournament": "CONIFA European Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "05/06/2017",
+        "opponent": "Székely Land",
+        "gf": 1,
+        "ga": 0,
+        "result": "W",
+        "tournament": "CONIFA European Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "03/08/2016",
+        "opponent": "Délvidék",
+        "gf": 2,
+        "ga": 1,
+        "result": "W",
+        "tournament": "Hungary Heritage Cup",
         "neutral": true
       }
     ]
@@ -26476,6 +26476,50 @@
       }
     ]
   },
+  "Délvidék": {
+    "elo": 1500.9606981259276,
+    "form": 0.5,
+    "attack": 2.0,
+    "defense": 1.5,
+    "style": 3.5,
+    "aggression": 0.5,
+    "ewma_form": 0.44249333402444213,
+    "adj_attack": 1.6945255564147994,
+    "adj_defense": 1.6554475548044612,
+    "sos": -0.4767142758276123,
+    "streak": -1,
+    "games": 2,
+    "last_goals_for": [
+      3,
+      1
+    ],
+    "last_goals_against": [
+      1,
+      2
+    ],
+    "last_date": "2016-08-03T00:00:00",
+    "window_start": "2016-08-01T00:00:00",
+    "recent": [
+      {
+        "date": "03/08/2016",
+        "opponent": "Felvidék",
+        "gf": 1,
+        "ga": 2,
+        "result": "L",
+        "tournament": "Hungary Heritage Cup",
+        "neutral": true
+      },
+      {
+        "date": "01/08/2016",
+        "opponent": "Székely Land",
+        "gf": 3,
+        "ga": 1,
+        "result": "W",
+        "tournament": "Hungary Heritage Cup",
+        "neutral": true
+      }
+    ]
+  },
   "Kárpátalja": {
     "elo": 1593.725529581688,
     "form": 0.6333333333333333,
@@ -26559,50 +26603,6 @@
         "ga": 0,
         "result": "W",
         "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      }
-    ]
-  },
-  "Délvidék": {
-    "elo": 1500.9606981259276,
-    "form": 0.5,
-    "attack": 2.0,
-    "defense": 1.5,
-    "style": 3.5,
-    "aggression": 0.5,
-    "ewma_form": 0.44249333402444213,
-    "adj_attack": 1.6945255564147994,
-    "adj_defense": 1.6554475548044612,
-    "sos": -0.4767142758276123,
-    "streak": -1,
-    "games": 2,
-    "last_goals_for": [
-      3,
-      1
-    ],
-    "last_goals_against": [
-      1,
-      2
-    ],
-    "last_date": "2016-08-03T00:00:00",
-    "window_start": "2016-08-01T00:00:00",
-    "recent": [
-      {
-        "date": "03/08/2016",
-        "opponent": "Felvidék",
-        "gf": 1,
-        "ga": 2,
-        "result": "L",
-        "tournament": "Hungary Heritage Cup",
-        "neutral": true
-      },
-      {
-        "date": "01/08/2016",
-        "opponent": "Székely Land",
-        "gf": 3,
-        "ga": 1,
-        "result": "W",
-        "tournament": "Hungary Heritage Cup",
         "neutral": true
       }
     ]
@@ -26841,6 +26841,85 @@
       }
     ]
   },
+  "Kabylia": {
+    "elo": 1460.0327476666787,
+    "form": 0.2777777777777778,
+    "attack": 1.3333333333333333,
+    "defense": 2.5,
+    "style": 3.833333333333333,
+    "aggression": -1.1666666666666667,
+    "ewma_form": 0.31246690158922563,
+    "adj_attack": 1.2413666975419018,
+    "adj_defense": 1.9607818836604003,
+    "sos": -0.05171830626300107,
+    "streak": -1,
+    "games": 6,
+    "last_goals_for": [
+      0,
+      0,
+      0,
+      0,
+      8,
+      0
+    ],
+    "last_goals_against": [
+      8,
+      0,
+      4,
+      0,
+      1,
+      2
+    ],
+    "last_date": "2018-06-09T00:00:00",
+    "window_start": "2018-05-31T00:00:00",
+    "recent": [
+      {
+        "date": "09/06/2018",
+        "opponent": "Abkhazia",
+        "gf": 0,
+        "ga": 2,
+        "result": "L",
+        "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "07/06/2018",
+        "opponent": "Tibet",
+        "gf": 8,
+        "ga": 1,
+        "result": "W",
+        "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "05/06/2018",
+        "opponent": "Matabeleland",
+        "gf": 0,
+        "ga": 0,
+        "result": "D",
+        "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "03/06/2018",
+        "opponent": "Western Armenia",
+        "gf": 0,
+        "ga": 4,
+        "result": "L",
+        "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      },
+      {
+        "date": "02/06/2018",
+        "opponent": "United Koreans in Japan",
+        "gf": 0,
+        "ga": 0,
+        "result": "D",
+        "tournament": "CONIFA World Football Cup",
+        "neutral": true
+      }
+    ]
+  },
   "Matabeleland": {
     "elo": 1484.6777866539912,
     "form": 0.4583333333333333,
@@ -27000,85 +27079,6 @@
         "gf": 6,
         "ga": 0,
         "result": "W",
-        "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      }
-    ]
-  },
-  "Kabylia": {
-    "elo": 1460.0327476666787,
-    "form": 0.2777777777777778,
-    "attack": 1.3333333333333333,
-    "defense": 2.5,
-    "style": 3.833333333333333,
-    "aggression": -1.1666666666666667,
-    "ewma_form": 0.31246690158922563,
-    "adj_attack": 1.2413666975419018,
-    "adj_defense": 1.9607818836604003,
-    "sos": -0.05171830626300107,
-    "streak": -1,
-    "games": 6,
-    "last_goals_for": [
-      0,
-      0,
-      0,
-      0,
-      8,
-      0
-    ],
-    "last_goals_against": [
-      8,
-      0,
-      4,
-      0,
-      1,
-      2
-    ],
-    "last_date": "2018-06-09T00:00:00",
-    "window_start": "2018-05-31T00:00:00",
-    "recent": [
-      {
-        "date": "09/06/2018",
-        "opponent": "Abkhazia",
-        "gf": 0,
-        "ga": 2,
-        "result": "L",
-        "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "07/06/2018",
-        "opponent": "Tibet",
-        "gf": 8,
-        "ga": 1,
-        "result": "W",
-        "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "05/06/2018",
-        "opponent": "Matabeleland",
-        "gf": 0,
-        "ga": 0,
-        "result": "D",
-        "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "03/06/2018",
-        "opponent": "Western Armenia",
-        "gf": 0,
-        "ga": 4,
-        "result": "L",
-        "tournament": "CONIFA World Football Cup",
-        "neutral": true
-      },
-      {
-        "date": "02/06/2018",
-        "opponent": "United Koreans in Japan",
-        "gf": 0,
-        "ga": 0,
-        "result": "D",
         "tournament": "CONIFA World Football Cup",
         "neutral": true
       }
