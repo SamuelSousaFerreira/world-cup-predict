@@ -36,7 +36,7 @@ st.set_page_config(page_title="Previsor Copa do Mundo", page_icon="⚽", layout=
 
 # Marca de build: alterar este valor força o Streamlit Cloud a recarregar o
 # entry-script (evita servir código antigo em cache após commits só de dados).
-APP_BUILD = "2026-08-16T09:15:16Z"
+APP_BUILD = "2026-08-17T09:22:56Z"
 
 # ----------------------------- Estilo (CSS) --------------------------------- #
 st.markdown(
